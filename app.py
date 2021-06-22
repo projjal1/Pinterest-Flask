@@ -30,9 +30,13 @@ class images(db.Model):
 #db.create_all()
 
 #Routing functions
-@app.route('/')
-def index():
-    record_images=images.query.all()
+@app.route('/<category>')
+def index(category):
+    if category=="All":
+        record_images=images.query.all()
+    else:
+        record_images=images.query.filter_by(fields=category).all()
+
     if "username" in session:
         return render_template("home.html", display_nm=session["username"],images_list=record_images)
     else:

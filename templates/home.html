@@ -13,26 +13,26 @@
             <div class="collapse navbar-collapse" id="navbarsExplore">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                    <a class="nav-link" href="#">Lifestyle</a>
+                    <a class="nav-link" href="{{ url_for('index', category='Lifestyle') }}">Lifestyle</a>
                     </li>
                     <li class="nav-item">
-                    <a class="nav-link" href="#">Food</a>
+                    <a class="nav-link" href="{{ url_for('index', category='Food') }}">Food</a>
                     </li>
                     <li class="nav-item">
-                    <a class="nav-link" href="#">Home</a>
+                    <a class="nav-link" href="{{ url_for('index', category='Home') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                    <a class="nav-link" href="#">Travel</a>
+                    <a class="nav-link" href="{{ url_for('index', category='Travel') }}">Travel</a>
                     </li>
                     <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
                     <div class="dropdown-menu shadow-lg" aria-labelledby="dropdown01">
-                        <a class="dropdown-item" href="#">Astronomy</a>
-                        <a class="dropdown-item" href="#">Nature</a>
-                        <a class="dropdown-item" href="#">Cooking</a>
-                        <a class="dropdown-item" href="#">Fashion</a>
-                        <a class="dropdown-item" href="#">Wellness</a>
-                        <a class="dropdown-item" href="#">Dieting</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Astronomy') }}">Astronomy</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Nature') }}">Nature</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Cooking') }}">Cooking</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Fashion') }}">Fashion</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Wellness') }}">Wellness</a>
+                        <a class="dropdown-item" href="{{ url_for('index', category='Dieting') }}">Dieting</a>
                     </div>
                     </li>
                 </ul>
@@ -40,15 +40,13 @@
             </nav>
         </div>
     </div>
-
-
     <div class="container-fluid">
         <div class="row">
             <div class="card-columns">
 
                 {% for image in images_list %}
                 <div class="card card-pin">
-                    <img class="card-img" src="/static/portal_images/{{image.id}}.jpg" alt="{{image.title}}">
+                    <img class="card-img" src="/static/portal_images/{{image.id}}.jpg" alt="{{image.title}}" >
                     <div class="overlay">
                         <h2 class="card-title title">{{ image.title }}</h2>
                         <div class="more">
@@ -58,7 +56,6 @@
                     </div>
                 </div>
                 {% endfor %}
-
             </div>
         </div>
     </div>

@@ -32,10 +32,11 @@ class images(db.Model):
 #Routing functions
 @app.route('/')
 def index():
+    record_images=images.query.all()
     if "username" in session:
-        return render_template("home.html", display_nm=session["username"])
+        return render_template("home.html", display_nm=session["username"],images_list=record_images)
     else:
-        return render_template("home.html", display_nm="Author")
+        return render_template("home.html", display_nm="Author",images_list=record_images)
 
 @app.route('/author')
 def profile():

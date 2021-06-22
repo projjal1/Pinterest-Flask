@@ -2,6 +2,7 @@
 
 {% block content %}
 
+<div class="container-fluid">
 <div class="jumbotron">
     <div class="container">
       <h1 class="display-3">Register User</h1>
@@ -18,13 +19,13 @@
         <div class="col">
             <div class="form-group">
                 <label for="firstname">First Name:</label>  <br>
-                <input required type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." style="width:304px;img">
+                <input type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." >
             </div>
         </div>
         <div class="col">
             <div class="form-group">
                 <label for="lastname">Last Name:</label>  <br>
-                <input type="text" class="form-control" id="lastname" name="lname" placeholder="last name.."style="width:304px;img">
+                <input type="text" class="form-control" id="lastname" name="lname" placeholder="last name.." >
             </div>
         </div>
     </div>
@@ -33,13 +34,13 @@
         <div class="col">
             <div class="form-group">
                 <label for="email-add">Email:</label>  <br>
-                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email"style="width:304px;img">
+                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" >
             </div>
         </div>
         <div class="col">
             <div class="form-group">
                 <label for="password">Password:</label>  <br>
-                <input type="password" class="form-control"  id="password" name="pwd"style="width:304px;img">
+                <input type="password" class="form-control"  id="password" name="pwd" >
             </div>
         </div>
     </div>
@@ -109,7 +110,8 @@
         </div>
     </div>
     
-    <button class="btn btn-primary" type="submit" >Register</button>
+    <button class="w-100 btn btn-lg btn-primary" type="submit" >Register</button>
 </form>
+</div>
 
 {% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="jumbotron">
+    <div class="container">
+      <h1 class="display-3">Register User</h1>
+      <p>Get started by creating an account on our website and create or explore our Pins.</p>
+    </div>
+</div>
+
+{% if error %}
+<p class="error">{{error}}</p>
+{% endif %}
+
+<form action='{{ url_for("register")}}' method="POST">
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="firstname">First Name:</label>  <br>
+                <input required type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." style="width:304px;img">
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label for="lastname">Last Name:</label>  <br>
+                <input type="text" class="form-control" id="lastname" name="lname" placeholder="last name.."style="width:304px;img">
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="email-add">Email:</label>  <br>
+                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email"style="width:304px;img">
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label for="password">Password:</label>  <br>
+                <input type="password" class="form-control"  id="password" name="pwd"style="width:304px;img">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <label for="interests">Your Interests:</label>  <br>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Lifestyle" id="interests">
+            <label class="form-check-label" for="interests">
+              Lifestyle
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Food" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Food
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Home" id="interests">
+            <label class="form-check-label" for="interests">
+              Home
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Travel" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Travel
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Astronomy" id="interests">
+            <label class="form-check-label" for="interests">
+              Astronomy
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Nature" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Nature
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Cooking" id="interests">
+            <label class="form-check-label" for="interests">
+              Cooking 
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Fashion" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Fashion
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Wellness" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Wellness
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="int"  value="Dieting" id="interests" interests>
+            <label class="form-check-label" for="interests">
+              Dieting
+            </label>
+        </div>
+    </div>
+    
+    <button class="btn btn-primary" type="submit" >Register</button>
+</form>
+
+{% endblock %}

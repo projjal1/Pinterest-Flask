@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div class="jumbotron">
+    <div class="container">
+      <h1 class="display-3"style=" text-align: center !important;" style="color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin: 10px 0 20px;"color: #333;>Login or Register</h1>
+      <p>Already have an account! Then login and start purchasing your medicine essentials. If not try creating an account! </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+      <div class="col-sm">
+        <div class="card" style="width: 18rem;">
+            <img class="card-img-top" src="/static/img/signup.jpg" alt="Register" height="200" width="400">
+            <div class="card-body">
+              <h5 class="card-title"style=" text-align: center !important;">Register User</h5>
+              <p class="card-text"style=" text-align: center !important;" >Create your account if you haven't already.</p>
+              <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+      </div>
+      <div class="col-sm">
+        <div class="card" style="width: 18rem;">
+            <img class="card-img-top" src="static/img/signin.png" alt="Signin" height="200" width="400">
+            <div class="card-body">
+              <h5 class="card-title" style=" text-align: center !important;">SignIn User</h5>
+              <p class="card-text"style=" text-align: center !important;">Already created account! Now login.</p>
+              <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -30,8 +30,9 @@ class images(db.Model):
 #db.create_all()
 
 #Routing functions
+@app.route('/', defaults={'category': "All"})
 @app.route('/<category>')
-def index(category):
+def index(category="All"):
     if category=="All":
         record_images=images.query.all()
     else:

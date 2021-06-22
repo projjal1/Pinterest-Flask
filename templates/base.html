@@ -47,54 +47,99 @@
 		}
 		.nav-link, .dropdown-item {font-weight:700;}
 		.navbar { padding: 0.5rem 2rem;}
-		.overlay {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		height: 100%;
-		width: 100%;
-		opacity: 0;
-		transition: .2s ease;
-		background-color: #008CBA;
-		}
-		.card {border:0;}
-		.card-pin:hover .overlay {
-		opacity: .5;
-		border: 5px solid #f3f3f3;
-		transition: ease .2s;
-		cursor: zoom-in;
-		background-color: black;
-		border-radius: 10%;
+
+		.card{
+			border:0;
 		}
 		.card-img{
-			border-radius: 10%;
+			border-radius: 5%;
 		}
-		.more {
-		color: white;
-		font-size: 14px;
-		position: absolute;
-		bottom: 0;
-		right: 0;
-		text-transform: uppercase;
-		transform: translate(-20%, -20%);
-		-ms-transform: translate(-50%, -50%);
+		.card-img:hover{
+			cursor: zoom-in;
 		}
-		.card-pin:hover .card-title {
-		color: #ffffff;
-		margin-top: 10px;
-		text-align: center;
-		font-size: 1.2em;
+		.card-link{
+			color:black;
 		}
-		.card-pin:hover .more a {
-		text-decoration: none;
-		color: #ffffff;
+		/* Container needed to position the overlay. Adjust the width as needed */
+		.image-container {
+  		position: relative;
 		}
-		.card-pin:hover .download a {
-		text-decoration: none;
-		color: #ffffff;
+
+		.image-save{
+			padding: 10px 15px;
+			background-color: #e60023;
+			color:white;
+			border-radius: 40%;
+			font-weight: 700;
 		}
+
+		.image-share{
+			padding: 5px 5px;
+			background-color: white;
+			border-radius: 50%;
+		}
+
+		.image-link{
+			padding: 5px 5px;
+			background-color: white;
+			border-radius: 30%;
+		}
+		
+
+		/* The overlay effect - lays on top of the container and over the image */
+
+		/* overlay - 1 */
+		.overlay1 {
+  		position: absolute;
+  		top: 0;
+		color: #f1f1f1;
+  		width: 100%;
+  		transition: .5s ease;
+  		opacity:0;
+  		color: white;
+  		font-size: 20px;
+  		padding: 20px;
+  		text-align: right;
+		border-radius: 5%}
+		.image-container:hover .overlay1 {
+ 		opacity: 1;
+		}
+
+		/* overlay - 2 */
+		.overlay2 {
+  		position: absolute;
+  		bottom: 0;
+		color: #f1f1f1;
+  		width: 100%;
+  		transition: .5s ease;
+  		opacity:0;
+  		color: white;
+  		font-size: 20px;
+  		padding: 20px;
+  		text-align: right;
+		border-radius: 5%}
+		.image-container:hover .overlay2 {
+ 		opacity: 1;
+		}
+
+		/* overlay - 3 */
+		.overlay3 {
+  		position: absolute;
+  		bottom: 0;
+		color: #f1f1f1;
+  		width: 20%;
+  		transition: .5s ease;
+  		opacity:0;
+  		color: white;
+  		font-size: 20px;
+		padding: 20px;
+  		text-align: left;
+		border-radius: 5%}
+		.image-container:hover .overlay3 {
+ 		opacity: 1;
+		}
+
+
 		.social {
 		position: relative;
 		transform: translateY(-50%);

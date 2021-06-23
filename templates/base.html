@@ -8,7 +8,7 @@
 		<meta name="generator" content="Jekyll v3.8.5">
 		<title>Pinterest</title>
 		<link rel="icon" href="/static/img/logo-small.png" type="image/icon type">
-		<link rel="canonical" href="https://getbootstrap.com/docs/4.3/examples/album/">
+
 		<!-- Bootstrap core CSS -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	</head>
@@ -17,7 +17,7 @@
 	<style>
 		body {padding-top:100px;}
 		.card-img {
-		max-width:100%;
+		max-width:200%;
 		}
 		a, .a:hover {
 		transition: all 0.2s;
@@ -48,7 +48,7 @@
 		.nav-link, .dropdown-item {font-weight:700;}
 		.navbar { padding: 0.5rem 2rem;}
 
-		.card{
+		.card-pin{
 			border:0;
 		}
 		.card-img{
@@ -56,10 +56,16 @@
 		}
 		.card-img:hover{
 			cursor: zoom-in;
+			background: black;
+			opacity: 0.6;
 		}
 		.card-link{
 			color:black;
 		}
+		button:hover, button:focus {
+		outline: none;
+		}
+
 		/* Container needed to position the overlay. Adjust the width as needed */
 		.image-container {
   		position: relative;
@@ -73,16 +79,19 @@
 			font-weight: 700;
 		}
 
-		.image-share{
-			padding: 5px 5px;
+		.image-share, .image-share:active{
+			padding: 10px 10px;
 			background-color: white;
 			border-radius: 50%;
+			border:0;
 		}
 
+
 		.image-link{
-			padding: 5px 5px;
+			padding: 5px 20px;
 			background-color: white;
-			border-radius: 30%;
+			border-radius: 40%;
+			font-weight: 600;
 		}
 		
 
@@ -92,7 +101,6 @@
 		.overlay1 {
   		position: absolute;
   		top: 0;
-		color: #f1f1f1;
   		width: 100%;
   		transition: .5s ease;
   		opacity:0;
@@ -109,7 +117,6 @@
 		.overlay2 {
   		position: absolute;
   		bottom: 0;
-		color: #f1f1f1;
   		width: 100%;
   		transition: .5s ease;
   		opacity:0;
@@ -126,7 +133,6 @@
 		.overlay3 {
   		position: absolute;
   		bottom: 0;
-		color: #f1f1f1;
   		width: 20%;
   		transition: .5s ease;
   		opacity:0;
@@ -210,7 +216,7 @@
 						</li>
 						{% endif %}
 						<li class="nav-item">
-							<a class="nav-link" href="{{ url_for('profile') }}"><img class="rounded-circle mr-2" src="/static/img/av.png" width="30"><span class="align-middle">{{display_nm}}</span></a>
+							<a class="nav-link" href="{{ url_for('profile_view') }}"><img class="rounded-circle mr-2" src="/static/img/av.png" width="30"><span class="align-middle">{{display_nm}}</span></a>
 						</li>
 						{% if None or display_nm!= "Author" %}
 						<li class="nav-item">
@@ -225,10 +231,10 @@
 		</header>
 		{% block content%}
 		{% endblock %}
+		<hr>
 	</body>
 	<!-- Footer -->
 	<footer class="text-muted">
-		<br><br><br><br><br>
 		<div class="container text-center">
 			<p>Copyright @Projjal Gop {{year}}</p>
 		</div>

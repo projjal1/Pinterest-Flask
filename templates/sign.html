@@ -2,7 +2,13 @@
 
 {% block content %}
 
+
 <div class="container-fluid">
+
+  {% if error %}
+  <p class="error">{{error}}</p>
+  {% endif %}
+
 <div class="jumbotron">
     <div class="container">
       <h1 class="display-3"style=" text-align: center !important;" style="color: #fff;
@@ -28,7 +34,7 @@
       </div>
       <div class="col-sm">
         <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src="static/img/signin.png" alt="Signin" height="200" width="400">
+            <img class="card-img-top" src="/static/img/signin.png" alt="Signin" height="200" width="400">
             <div class="card-body">
               <h5 class="card-title" style=" text-align: center !important;">SignIn User</h5>
               <p class="card-text"style=" text-align: center !important;">Already created account! Now login.</p>

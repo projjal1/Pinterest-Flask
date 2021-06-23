@@ -40,21 +40,27 @@
             </nav>
         </div>
     </div>
-    <div class="container-fluid">
+    <div class="container-fluid mb-5">
         <div class="row">
             <div class="card-columns">
 
                 {% for image in images_list %}
-                <div class="card">
+                <div class="card card-pin">
                     <div class="image-container">
                         <img class="card-img image" src="/static/portal_images/{{image.id}}.jpg" alt="{{image.title}}" >
-                        <div class="overlay1"><button href="#" class="image-save">Save</button></div>
-                        <div class="overlay2"><button href="#" class="image-share"><img width="20%" src="/static/img/upload-icon.jpg"></button></div>
-                        <div class="overlay3"><button href="#" class="image-link">Link</button></div>
+                        <div class="overlay1"><button class="image-save">Save</button></div>
+                        <div class="overlay2">
+                                <button class="image-share"><img width="20" src="/static/img/upload-icon-resized.jpg"></button>
+                        </div>
+                        <div class="overlay3">
+                            <form method="GET" action="{{ image.links }}">
+                                <button class="image-link">Link</button>
+                            </form>
+                        </div>
                     </div>
 
                     <div class="card-body">
-                        <a class="card-link" href="#"><h5 class="card-title title">{{ image.title }}</h5></a>
+                        <a class="card-link" href="{{ url_for('view_photo',photo_id=image.id) }}"><h5 class="card-title title">{{ image.title }}</h5></a>
                     </div>
                 </div>
                 {% endfor %}
@@ -62,5 +68,6 @@
         </div>
     </div>
 </section>
+
 
 {% endblock %}

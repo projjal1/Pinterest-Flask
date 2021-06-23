@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script>
+    function readurl(input){
+        if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            $('#preview')
+                .attr('src', e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+    }
+</script>
+
+<div class="container-fluid">
+    <main class="form-signin" center>
+        <form action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data">
+          <img class="mb-4" src="/static/img/logo.png" alt="Pinterest" height="100">
+          <h1 class="h3 mb-3 fw-normal">Complete Your Profile</h1>
+          <p>People visiting your profile will see the following info</p>
+            <br><br>
+          
+            <div class="container" style="padding-bottom: 250px;">
+            <div class="col" style="float:left; width:30%">
+                <img id="preview" src="/static/img/default-img.jpg" width="200" height="200">
+            </div>
+            <div class="form-group" style="float:left; width:40%; margin-left:30px">
+                <label for="image">Upload Image</label> <br>
+                <input type="file" id="image" name='img' onchange="readurl(this)">
+            </div>    
+            </div>    
+
+
+          <div class="form-group">
+            <label for="profile-bio">About your profile:</label>  <br>
+            <textarea rows="4" class="form-control" id="profile-bio" name="bio" placeholder="Enter something about you"></textarea>
+          </div>
+    
+          <div class="form-group">
+            <label for="website-url">Enter your website link:</label>  <br>
+            <input type="text" class="form-control"  id="website-url" name="url" value="https://www.">
+          </div>
+    
+          <button class="w-100 btn btn-lg btn-primary" type="submit">Add Information</button>
+        </form>
+    </main>
+</div>
+
+{% endblock %}

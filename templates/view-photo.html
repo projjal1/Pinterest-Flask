@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div class="container-fluid">
+
+    <center>
+    <div class="card shadow" style="width: 1000px;border:6px;border-radius: 25px;padding: 20px;">
+        <div class="row no-gutters">
+            <div class="col-sm-5">
+                <img class="card-img" src="/static/portal_images/{{img_data.id}}.jpg" alt="{{img_data.title}}">
+            </div>
+            <div class="col-sm-7">
+                <div class="card-body">
+                    <a href="{{img_data.links}}">{{img_data.links}}</a>
+                    <br><br>
+                    <h1 class="card-title">{{img_data.title}}</h1>
+                    <p class="card-text">{{img_data.description}}</p>
+                    
+                    <hr><br>
+                    <div class="row">
+                        <div class="col">
+                            <div class="row">
+                                <div class="col">
+                                    <img src="/static/portal_images/user{{user_data.id}}.jpg"	class="rounded-circle" width="100" height="100">
+                                </div>
+                                <div class="col">
+                                    <p style="font-size:large;font-weight: 900;">{{ user_data.name }}</p>
+                                    <p>500 Followers</p>
+                                    <form action="{{url_for('profile_view',profile_email=user_data.email,action=1) }}" method="GET">
+                                        <button class="btn btn-primary">Visit Profile</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-secondary">Follow</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </center>
+</div>
+
+{% endblock %}

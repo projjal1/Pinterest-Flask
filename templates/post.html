@@ -66,16 +66,11 @@
                 <div class="form-group">
                     <label for="category">Category</label> <br>
                     <select name="cat" id="category">
-                        <option value="Lifestyle">Lifestyle</option>
-                        <option value="Food">Food</option>
-                        <option value="Home">Home</option>
-                        <option value="Travel">Travel</option>
-                        <option value="Astronomy">Astronomy</option>
-                        <option value="Nature">Nature</option>
-                        <option value="Cooking">Cooking</option>
-                        <option value="Fashion">Fashion</option>
-                        <option value="Wellness">Wellness</option>
-                        <option value="Dieting">Dieting</option>
+
+                        {% for cat in categories %}
+                        <option value="{{cat.name}}">{{cat.name}}</option>
+                        {% endfor %}
+                        
                     </select>
                 </div>
             

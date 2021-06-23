@@ -5,6 +5,7 @@ from flask.helpers import url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql.operators import distinct_op
 from PIL import Image
+import random
 
 # Flask app configs
 app=Flask(__name__)
@@ -49,10 +50,15 @@ def index(category="All"):
     else:
         record_images=images.query.filter_by(fields=category).all()
 
+    random.shuffle(record_images)
+
     if "username" in session:
         return render_template("home.html", display_nm=session["username"],images_list=record_images)
     else:
         return render_template("home.html", display_nm="Author",images_list=record_images)
+
+
+#TODO Return Similar images to shown image
 
 @app.route('/view/<photo_id>')
 def view_photo(photo_id):
@@ -61,11 +67,16 @@ def view_photo(photo_id):
     else:
         nm=session["username"]
     
+
+
     record_images=images.query.filter_by(id=photo_id).all()
     user_id=record_images[0].user_id
     user_details=users.query.filter_by(id=user_id).all()
+    img_obj=images.query.filter_by(user_id=user_id).all()
+    random.shuffle(img_obj)
 
-    return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0])
+    return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0], 
+    images_list=img_obj[:20])
 
 @app.route('/author',methods=["GET","POST"])
 def profile():
@@ -192,7 +203,7 @@ def register():
 
         new_string=""
         for ls in interest_list:
-            new_string=ls+","
+            new_string=new_string+ls+","
         
         user_obj = users(name=full_name, email=email, password=pwd, interests=new_string[:-1])
         db.session.add(user_obj)

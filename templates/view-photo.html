@@ -5,8 +5,16 @@
 
 <div class="container-fluid" style="margin-top: 20px;">
 
+    <div class="row">
+        <div class="col-sm-1">
+            <form action="{{ url_for('index') }}">
+                <button class="image-share"><img src="/static/img/go-back.png"></button>
+            </form>
+        </div>
+
+    <div class="col-sm-2" style="padding-left: 100px;">
     <center>
-    <div class="card shadow" style="width: 1000px;border:6px;border-radius: 25px;padding: 20px;">
+    <div class="card shadow" style="width: 1000px;border:6px;border-radius: 25px;padding-top:0px;padding: 20px;">
         <div class="row no-gutters">
             <div class="col-sm-5">
                 <img class="card-img" src="/static/portal_images/{{img_data.id}}.jpg" alt="{{img_data.title}}">
@@ -17,10 +25,10 @@
                     <div class="card-body" style="background-color: white">
                         <div class="row">
                             <div class="col-sm">
-                                <button class="image-share"><img width="20" src="/static/img/3dots.png"></button>
+                                <button class="image-share"><img width="50%" src="/static/img/3dots.png"></button>
                             </div>
                             <div class="col-sm" style="padding-right: 200px;">
-                                <button class="image-share"><img width="20" src="/static/img/upload-icon-resized.jpg"></button>
+                                <button class="image-share"><img width="80%" src="/static/img/upload-icon.png"></button>
                             </div>
                             <div class="col-sm">
                                 <button class="image-save">Save</button>
@@ -68,6 +76,8 @@
         </div>
     </div>
     </center>
+    </div>
+    </div>
 
     <center><p style="padding-top: 50px;font-weight: 750;font-size: x-large;">More like this</p></center>
 </div>

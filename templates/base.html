@@ -80,7 +80,7 @@
 		}
 
 		.image-share, .image-share:active{
-			padding: 20px 20px;
+			padding: 10px 10px;
 			background-color: white;
 			border-radius: 50%;
 			border:0;
@@ -180,6 +180,9 @@
 		.card-columns {
     		column-count: 5;
  		}
+		.exclusive {
+			column-count: 2;
+		}
 
 		#search-input{
 		height: auto;
@@ -188,6 +191,12 @@
 		box-shadow:darkgrey;
 		background-color: #DCDCDC;
 		}
+		#element {
+ 		position: fixed;
+  		bottom: 30px;
+  		right: 30px;
+		}
+
 	</style>
 	<!-- Body -->
 	<body>
@@ -205,7 +214,7 @@
 							<a class="nav-link active" href="{{ url_for('index', category='All') }}">Home</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="index.html">Today</a>
+							<a class="nav-link" href="{{ url_for('exclusive') }}">Today</a>
 						</li>
 						<li class="nav-item">
 							<form class="bd-search hidden-sm-down">
@@ -215,9 +224,15 @@
 							</form>
 						</li>
 						{% if None or display_nm!= "Author" %}
-						<li class="nav-item">
-							<a class="nav-link" href="{{ url_for('post') }}">Post</a>
-						</li>
+						{% if display_nm!="Admin" %}
+							<li class="nav-item">
+								<a class="nav-link" href="{{ url_for('post') }}">Post</a>
+							</li>
+						{% else %}
+							<li class="nav-item">
+								<a class="nav-link" href="{{ url_for('admin_listing') }}">Admin Post</a>
+							</li>
+						{% endif %}
 						{% endif %}
 						<li class="nav-item">
 							<a class="nav-link" href="{{ url_for('profile_view') }}"><img class="rounded-circle mr-2" src="/static/img/av.png" width="30"><span class="align-middle">{{display_nm}}</span></a>
@@ -235,6 +250,12 @@
 		</header>
 		{% block content%}
 		{% endblock %}
+
+		{% if display_nm!="Author" and display_nm!="Admin" %}
+		<form action="{{url_for('post')}}">
+			<button id="element" class="image-share"><img width="80%" src="/static/img/add-icon.png"></button>
+		</form>
+		{% endif %}
 		<hr>
 	</body>
 	<!-- Footer -->

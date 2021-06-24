@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script>
+    function readurl1(input){
+        if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            $('#preview1')
+                .attr('src', e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+    }
+    function readurl2(input){
+        if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            $('#preview2')
+                .attr('src', e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+    }
+</script>
+
+
+<div class="container-fluid" style="margin-top: 20px;">
+
+    <center>
+    <div class="card shadow" style="width: 1200px;border:6px;border-radius: 25px;padding: 20px;">
+        <h1 style="padding-bottom: 20px;">Admin Post!</h1>
+        <form action="{{ url_for('admin_listing') }}" method="POST" enctype="multipart/form-data">
+        <div class="row no-gutters">
+            <div class="col">
+                <h3>Enter Thought of the Day</h3>
+                <div class="form-group">
+                    <label for="itemname">Title:</label>  <br>
+                    <input type="text" class="form-control"  id="itemname" name="iname1" placeholder="Enter Item Name..">
+                </div>
+                <div class="form-group">
+                    <label for="itemname">Link:</label>  <br>
+                    <input type="text" class="form-control"  id="itemname" name="link1" placeholder="Enter Link..">
+                </div>
+                <div class="form-group">
+                    <label for="image">Upload Image</label> <br>
+                    <input type="file" id="image" name='img1' onchange="readurl1(this)">
+                </div>
+                <img  width="500" height="500" class="card-img" id="preview1" src="/static/img/default-img.jpg" alt="Thought of the day">  
+            </div>
+            <div class="col" style="padding-left: 20px;">
+                <h3>Enter Advertisement</h3>
+                <div class="form-group">
+                    <label for="itemname">Title:</label>  <br>
+                    <input type="text" class="form-control"  id="itemname" name="iname2" placeholder="Enter Item Name..">
+                </div>
+                <div class="form-group">
+                    <label for="itemname">Link:</label>  <br>
+                    <input type="text" class="form-control"  id="itemname" name="link2" placeholder="Enter Link..">
+                </div>
+                <div class="form-group">
+                    <label for="image">Upload Image</label> <br>
+                    <input type="file" id="image" name='img2' onchange="readurl2(this)">
+                </div>
+                <img  width="500" height="500" class="card-img" id="preview2" src="/static/img/default-img.jpg" alt="Thought of the day"> 
+            </div>
+        </div>
+        <br>
+        <input style="padding-top: 20px;" type="submit" class="btn btn-primary" value="Submit your promotions!">
+        </form>
+    </div>
+    </center>
+</div>
+
+{% endblock %}

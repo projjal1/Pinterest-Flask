@@ -1,0 +1,4 @@
+Flask 
+sklearn
+scikit-learn
+Pillow

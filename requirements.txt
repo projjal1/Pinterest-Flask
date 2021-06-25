@@ -2,3 +2,5 @@ Flask
 sklearn
 scikit-learn
 Pillow
+gunicorn
+Flask-SQLAlchemy

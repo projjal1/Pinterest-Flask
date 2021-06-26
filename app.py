@@ -269,7 +269,7 @@ def user_follow_action(email):
         return redirect(url_for('index'))
 
     if "username" not in session:
-        return render_template("sign.html",display_nm="Author",error="You need to log in to view profile of users.")
+        return render_template("sign.html",display_nm="Author",error="You need to log in to follow users.")
 
     u_email=session["email"]
     obj=follow_user(user_email=email,follower_email=u_email)
@@ -328,6 +328,14 @@ def view_photo(photo_id):
     img_obj.pop(img_obj.index(record_images[0]))
     random.shuffle(img_obj)
     obj_follow=follow_user.query.filter_by(user_email=user_details[0].email).all()
+    
+    if "username" not in session:
+        flag_follow=1
+        flag_save=1
+
+        return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0], 
+    images_list=img_obj[:20], follow_count = len(obj_follow), flag_follow_check = flag_follow, flag_save_check=flag_save)
+
     obj_follow_check=follow_user.query.filter_by(user_email=user_details[0].email, follower_email=session["email"]).all()
     obj_users=users.query.filter_by(email=session["email"]).all()
     obj_save_check=saved_pins.query.filter_by(user_id=obj_users[0].id,img_id=photo_id).all()

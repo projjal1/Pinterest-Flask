@@ -2,6 +2,26 @@
 
 {% block content %}
 
+<script src="/static/scripts/jquery/jquery.min.js"></script>
+    <script>
+        $(function() {
+        $('input').click(function() {
+            $.ajax({
+                url: '/follow/{{user_data.email}}',
+                success: function(data) {
+                    document.getElementById('follow-disp').innerHTML=data["count"]+" Followers"
+                    document.getElementById('follow-bar').disabled=true;
+                    document.getElementById("follow-bar").innerHTML="Following"
+                },
+                error: function(error) {
+                    alert("error");
+                    console.log(error);
+                }
+            });
+        });
+        });
+</script>
+
 
 <div class="container-fluid" style="margin-top: 20px;">
 
@@ -25,13 +45,23 @@
                     <div class="card-body" style="background-color: white">
                         <div class="row">
                             <div class="col-sm">
-                                <button class="image-share"><img width="50%" src="/static/img/3dots.png"></button>
+                                <form action="{{ url_for('view_photo',photo_id=img_data.id) }}" method="POST">
+                                    <button class="image-share"><img width="50%" src="/static/img/3dots.png"></button>
+                                </form>
                             </div>
                             <div class="col-sm" style="padding-right: 200px;">
-                                <button class="image-share"><img width="80%" src="/static/img/upload-icon.png"></button>
+                                <button class="image-share" onclick="window.open(
+                                    'https://twitter.com/intent/tweet?text=Check out the pin at Pinterest on {{img_data.title}} at &url=+{{request.url}}', 
+                                    'twitter-share-dialog', 
+                                    'width=626,height=436'); 
+                                    return false;"><img width="80%" src="/static/img/upload-icon.png"></button>
                             </div>
                             <div class="col-sm">
-                                <button class="image-save">Save</button>
+                                <form action="{{ url_for('save_pins',img_id=img_data.id) }}" method="GET">
+                                <button class="image-save"  {% if not flag_save_check %} disabled {% endif %}>
+                                    {% if flag_save_check %}    Save  {% else %}  Saved  {% endif %}
+                                </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -53,7 +83,7 @@
                                 </div>
                                 <div class="col">
                                     <p style="font-size:medium;font-weight: 500;">{{ user_data.name }}</p>
-                                    <p>500 Followers</p>
+                                    <p id="follow-disp">{{follow_count}} Followers</p>
                                     <form action="{{url_for('profile_view',profile_email=user_data.email,action=1) }}" method="GET">
                                         <button class="btn btn-primary">Visit Profile</button>
                                     </form>
@@ -61,16 +91,17 @@
                             </div>
                         </div>
                         <div class="col">
-                            <form method="GET" action="#">
-                                <button style="padding: 15px 20px;
+                            <form method="POST" action="{{ url_for('user_follow_action',email=user_data.email) }}">
+                                <button id="follow-bar" style="padding: 15px 20px;
                                 background-color: lightgrey;
                                 border-radius: 20px;
                                 font-weight: 600;
-                                border:0;font-weight: 600;">Follow</button>
+                                border:0;font-weight: 600;" {% if not flag_follow_check %} disabled {% endif %}> 
+                                    {% if not flag_follow_check %} Followed {% else %} Follow {% endif %}
+                                </button>
                             </form>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

@@ -1,6 +1,7 @@
 from os import error
+import os
 import re
-from flask import Flask, render_template, session, request, redirect
+from flask import Flask, render_template, session, request, redirect, send_from_directory
 from flask.helpers import url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql.operators import distinct_op
@@ -57,6 +58,16 @@ class admin_post(db.Model):
     advertisement_link = db.Column(db.String(100))
     thought_link = db.Column(db.String(100))
     date = db.Column(db.String(100))
+
+class follow_user(db.Model):
+    id = db.Column('follow_id', db.Integer, primary_key=True)
+    user_email = db.Column(db.String(100))
+    follower_email = db.Column(db.String(100))
+
+class saved_pins(db.Model):
+    id = db.Column('save_id', db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    img_id = db.Column(db.Integer)
 
 #Run only to create initial .sqlite database 
 #db.create_all()
@@ -252,6 +263,21 @@ def index(category="All"):
         return render_template("home.html", display_nm="Author",images_list=record_images)
 
 
+@app.route('/follow/<email>',methods=["POST"])
+def user_follow_action(email):
+    if request.method=="GET":
+        return redirect(url_for('index'))
+
+    if "username" not in session:
+        return render_template("sign.html",display_nm="Author",error="You need to log in to view profile of users.")
+
+    u_email=session["email"]
+    obj=follow_user(user_email=email,follower_email=u_email)
+    db.session.add(obj)
+    db.session.commit()
+
+    return redirect(url_for('profile_view',profile_email=email,action=1))
+
 @app.route('/today')
 def exclusive():
     if "username" in session:
@@ -262,9 +288,28 @@ def exclusive():
     listing_images=admin_post.query.all()[::-1]
     return render_template("latest_uploaded.html",display_nm=nm,images_list=listing_images)
 
+#Save pins
+@app.route('/save_pins/<img_id>')
+def save_pins(img_id):
+    if "username" not in session:
+        return render_template("sign.html",display_nm="Author",error="You need to log in to save images.")
+    
+    #Save into db
+    user_rec=users.query.filter_by(email=session["email"]).all()
+    obj=saved_pins(user_id=user_rec[0].id,img_id=img_id)
+    db.session.add(obj)
+    db.session.commit ()
 
-@app.route('/view/<photo_id>')
+    return redirect(url_for('view_photo',photo_id=img_id))
+
+@app.route('/view/<photo_id>', methods=["POST","GET"])
 def view_photo(photo_id):
+    if request.method=="POST":
+        #Append dir path
+        downloads = os.path.join(app.root_path, 'static/portal_images/')
+        # Returning file from appended path
+        return send_from_directory(directory=downloads, path=str(photo_id)+".jpg")
+
     if "username" not in session:
         nm="Author"
     else:
@@ -282,9 +327,25 @@ def view_photo(photo_id):
     img_obj=images.query.filter_by(fields=record_images[0].fields).all()
     img_obj.pop(img_obj.index(record_images[0]))
     random.shuffle(img_obj)
+    obj_follow=follow_user.query.filter_by(user_email=user_details[0].email).all()
+    obj_follow_check=follow_user.query.filter_by(user_email=user_details[0].email, follower_email=session["email"]).all()
+    obj_users=users.query.filter_by(email=session["email"]).all()
+    obj_save_check=saved_pins.query.filter_by(user_id=obj_users[0].id,img_id=photo_id).all()
+
+    if session["email"]==user_details[0].email:
+        flag_follow=0
+    elif len(obj_follow_check)>0:
+        flag_follow=0
+    else:
+        flag_follow=1
+
+    if len(obj_save_check)>0:
+        flag_save=0
+    else:
+        flag_save=1
 
     return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0], 
-    images_list=img_obj[:20])
+    images_list=img_obj[:20], follow_count = len(obj_follow), flag_follow_check = flag_follow, flag_save_check=flag_save)
 
 @app.route('/author',methods=["GET","POST"])
 def profile():
@@ -347,9 +408,24 @@ def profile_view(profile_email,action):
         user_id=obj[0].id
         slug_obj=user_slugs.query.filter_by(user_id=user_id).all()
         img_obj=images.query.filter_by(user_id=user_id).all()
+
+        len_posts=len(img_obj)
+
+        #Saved pins images 
+        obj_users=users.query.filter_by(email=session["email"]).all()
+        obj_saved_pins=saved_pins.query.filter_by(user_id=obj_users[0].id).all()
+
+        for each in obj_saved_pins:
+            img_id=each.id
+            rec=images.query.filter_by(id=img_id).all()[0]
+            if rec not in img_obj:
+                img_obj.append(rec)
+
+        obj_follow=follow_user.query.filter_by(user_email=profile_email).all()
+        obj_following=follow_user.query.filter_by(follower_email=email).all()
         
         return render_template("profile_view.html",display_nm=nm,user_data=obj[0],slug_data=slug_obj[0],images_list=img_obj
-        ,img_count=len(img_obj))
+        ,img_count=len_posts,follow_count=len(obj_follow),following_count=len(obj_following))
 
 
 @app.route(r'/post',methods=["GET","POST"])

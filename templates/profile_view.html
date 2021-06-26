@@ -3,15 +3,15 @@
 {% block content %}
 
 <div class="container-fluid">
-<center><div class="jumbotron border-round-0 min-50vh" style="background-image:url('/static/img/background-banner.jfif');width: 800px; height: 400px;">
+<center><div class="jumbotron border-round-0 min-50vh" style="background-image:url('/static/img/background-banner.jfif');width: 1000px; height: 400px;">
 </div>
 <div class="container-fluid mb-4">
-	<img src="/static/portal_images/user{{user_data.id}}.jpg"	class="mt-neg100 mb-4 rounded-circle" width="128" height="128">
-	<h1 class="font-weight-bold title">{{ display_nm }}</h1>
+	<img src="/static/portal_images/user{{user_data.id}}.jpg"	class="mt-neg100 mb-4 rounded-circle" width="150" height="150">
+	<h1 class="font-weight-bold title" style="font-size: 50px;">{{ display_nm }}</h1>
 	<b><p>Follow me at <a href={{slug_data.website}}>{{slug_data.website}}</a></p></b>
-	<p style="font-weight: 350; font-size: large;">{{slug_data.bio}}</p>
-	<p>250 followers, 650 following</p>
-	<p><b>{{img_count}}</b> posts</p>
+	<p style="font-weight: 350; font-size: x-large;">{{slug_data.bio}}</p>
+	<p style="font-weight: 600; font-size: larger;">{{follow_count}} followers : {{following_count}} following</p>
+	<p style="font-weight: 600; font-size: larger;"><b style="font-size: xx-large;">{{img_count}}</b> posts</p>
 	<button class="image-save">Follow</button>
 </div>
 </center>

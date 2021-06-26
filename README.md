@@ -35,7 +35,8 @@ The project has most of the features as in original Pinterest site other than "B
 
 ## What is Left to be Done ?
 The project is still under development although it may look as if complete. <br>The following features need to be added.
-<ul><li>Search functionality <li>Embedded AI for recommendation engine <li>Usage of OpenCV to generated similar images in "MORE LIKE THIS" section</ul>
+<ul><li>Search functionality <li>Embedded AI for recommendation engine <li>Usage of OpenCV to generated similar images in "MORE LIKE THIS" section
+<li>Optimization for mobile devices</ul>
 
 ### Attributions 
 I would like to mention the following sources whose artifacts I have used to make this project

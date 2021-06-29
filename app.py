@@ -262,7 +262,6 @@ def index(category="All"):
     else:
         return render_template("home.html", display_nm="Author",images_list=record_images)
 
-
 @app.route('/follow/<email>',methods=["POST"])
 def user_follow_action(email):
     if request.method=="GET":

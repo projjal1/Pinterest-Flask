@@ -11,6 +11,7 @@
 
 		<!-- Bootstrap core CSS -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
 	</head>
 
 	<!-- style -->
@@ -176,7 +177,6 @@
 		font-weight: 700;
 		font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 		}
-		
 
 		@media (max-width: 768px) {
 			.card-columns {
@@ -218,12 +218,39 @@
 			column-count: 2;
 		}
 
+		#myUL {
+		position: relative;
+  		/* Remove default list styling */
+  		list-style-type: none;
+  		padding: 0;
+  		margin: 0;
+		}
+
+		#myUL li a {
+  		border: 1px solid #ddd; /* Add a border to all links */
+  		margin-top: -1px; /* Prevent double borders */
+  		background-color: #f6f6f6; /* Grey background color */
+  		padding: 12px; /* Add some padding */
+  		text-decoration: none; /* Remove default text underline */
+  		font-size: 18px; /* Increase the font-size */
+  		color: black; /* Add a black text color */
+  		display: block; /* Make it into a block element to fill the whole list */
+		}
+
+		#myUL li a:hover:not(.header) {
+  		background-color: #eee; /* Add a hover effect to all links, except for headers */
+		}
+
 		#search-input{
 		height: 50px;
 		border-radius: 50px 50px;
-		padding: 0px 8px 0px 16px;
+		padding: 0px 10px 0px 20px;
+		padding-left: 50px;
 		box-shadow:#878787;
 		background-color: #DCDCDC;
+		background-image: url('/static/img/search.png');
+		background-position: 10px 8px;
+  		background-repeat: no-repeat;
 		}
 
 		#element {
@@ -252,11 +279,7 @@
 							<a class="nav-link" href="{{ url_for('exclusive') }}">Today</a>
 						</li>
 						<li class="nav-item">
-							<form class="bd-search hidden-sm-down">
-								<input type="text" class="form-control font-weight-bold" id="search-input" placeholder="Search" autocomplete="off">
-								<div class="dropdown-menu bd-search-results" id="search-results">
-								</div>
-							</form>
+							<input type="text" onkeyup="myFunction()" class="form-control font-weight-bold" id="search-input" placeholder="Search" autocomplete="off">
 						</li>
 						{% if None or display_nm!= "Author" %}
 						{% if display_nm!="Admin" %}
@@ -283,8 +306,25 @@
 				</div>
 			</nav>
 		</header>
+
+		<center>
+			<!-- Seacrch Options-->	
+			<button class="btn btn-secondary" id="close-btn" onclick="myFunction2()" hidden>Close</button>
+			<ul id="myUL" hidden>
+				<li><a href="{{ url_for('index', category='Motorcade') }}">Cars</a></li>
+				<li><a href="{{ url_for('index', category='Travel') }}">Destinations</a></li>
+				<li><a href="{{ url_for('index', category='Travel') }}">Travel Destinations</a></li>
+				<li><a href="{{ url_for('index', category='Home') }}">Home Decor</a></li>
+				<li><a href="{{ url_for('index', category='Home') }}">Interior</a></li>
+				<li><a href="{{ url_for('index', category='Science') }}">Science Illustrations</a></li>
+				<li><a href="{{ url_for('index', category='Food') }}">Foods around the World</a></li>
+				<li><a href="{{ url_for('index', category='Cooking') }}">Cooking Recipes</a></li>
+			</ul>
+		</center>
+	
 		{% block content%}
 		{% endblock %}
+
 
 		{% if display_nm!="Author" and display_nm!="Admin" %}
 		<form action="{{url_for('post')}}">
@@ -293,15 +333,51 @@
 		{% endif %}
 		<hr>
 	</body>
+	
 	<!-- Footer -->
 	<footer class="text-muted">
 		<div class="container-fluid text-center">
 			<p>Copyright @Projjal Gop {{year}}</p>
 		</div>
 	</footer>
-	<!-- jQuery library -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<!-- Script to show options on search-->
+	<script>
+		function myFunction2() {
+			document.getElementById("myUL").hidden=1;
+			document.getElementById("close-btn").hidden=1;
+		}
+
+		function myFunction() {
+		  document.getElementById("myUL").hidden=0;
+		  document.getElementById("close-btn").hidden=0;
+
+		  // Declare variables
+		  var input, filter, ul, li, a, i, txtValue;
+		  input = document.getElementById('search-input');
+		  console.log(input);
+		  filter = input.value.toUpperCase();
+		  ul = document.getElementById("myUL");
+		  li = ul.getElementsByTagName('li');
+		
+		  // Loop through all list items, and hide those who don't match the search query
+		  for (i = 0; i < li.length; i++) {
+			a = li[i].getElementsByTagName("a")[0];
+			txtValue = a.textContent || a.innerText;
+			if (txtValue.toUpperCase().indexOf(filter) > -1) {
+			  li[i].style.display = "";
+			} else {
+			  li[i].style.display = "none";
+			}
+		  }
+		}
+	</script>
+
+
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-	<!-- Latest compiled JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<!-- Compiled JS library -->
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
 </html>

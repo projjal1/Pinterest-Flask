@@ -1,5 +1,5 @@
 # Pinterest-Flask
-A Pinterest Clone made using Flask in Python that deals with pins and has embedded AI at its core.
+A Pinterest Clone made using Flask in Python that deals with pins and has embedded AI at its core end.
 
 ## Motivation 
 This project was made as a part of creating something unique with my Flask skills essentially after being proficient in developing applications with Django. Also, I am not that much

@@ -3,7 +3,7 @@
 {% block content %}
 
 <script src="/static/scripts/jquery/jquery.min.js"></script>
-    <script>
+<script>
         $(function() {
         $('input').click(function() {
             $.ajax({
@@ -20,8 +20,36 @@
             });
         });
         });
+
+        function showTab(flag){
+            var elem1=document.getElementById("profile-data");
+            var elem2=document.getElementById("disqus_thread");
+
+            if (flag==1)
+            {
+                elem1.hidden=false;
+                elem2.hidden=true;
+            }
+            else{
+                elem1.hidden=true;
+                elem2.hidden=false;
+            }
+        }
 </script>
 
+<style>
+/* change border radius for the tab , apply corners on top*/
+
+#exTab3 .nav-pills > li > a {
+  border-radius: 4px 4px 0 0 ;
+}
+
+#exTab3 .tab-content {
+  color : white;
+  background-color: #428bca;
+  padding : 5px 15px;
+}
+</style>
 
 <div class="container-fluid" style="margin-top: 20px;">
 
@@ -44,17 +72,17 @@
 
                     <div class="card-body" style="background-color: white">
                         <div class="row">
-                            <div class="col-sm">
+                            <div class="col">
                                 <form action="{{ url_for('view_photo',photo_id=img_data.id) }}" method="POST">
-                                    <button class="image-share"><img width="50%" src="/static/img/3dots.png"></button>
+                                    <button class="image-share"><img width="100%" src="/static/img/3dots.png"></button>
                                 </form>
                             </div>
-                            <div class="col-sm" style="padding-right: 200px;">
+                            <div class="col" style="padding-right: 200px;">
                                 <button class="image-share" onclick="window.open(
                                     'https://twitter.com/intent/tweet?text=Check out the pin at Pinterest on {{img_data.title}} at &url=+{{request.url}}', 
                                     'twitter-share-dialog', 
                                     'width=626,height=436'); 
-                                    return false;"><img width="80%" src="/static/img/upload-icon.png"></button>
+                                    return false;"><img width="40%" src="/static/img/upload-icon.png"></button>
                             </div>
                             <div class="col-sm">
                                 <form action="{{ url_for('save_pins',img_id=img_data.id) }}" method="GET">
@@ -68,19 +96,33 @@
 
 
 
-                    <a href="{{img_data.links}}">{{img_data.links}}</a>
+                    <a style="font-size:16px;" href="{{img_data.links}}">{{img_data.links}}</a>
                     <br><br>
-                    <h1 class="card-title" style="font-weight: 750;">{{img_data.title}}</h1>
-                    <p class="card-text">{{img_data.description}}</p>
+                    <h1 class="card-title" style="font-weight: 750;font-size: 36px;">{{img_data.title}}</h1>
+                    <p class="card-text" style="font-size: 14px;">{{img_data.description}}</p>
                     
-                    <hr><br>
+                    <br>
 
-                    <div class="row">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <button id="but1" class="btn btn-primary" onclick="showTab(1);">Profile</button>
+                            </div>
+                            <div class="col-sm-2">
+                                <button id="but2" class="btn btn-danger" onclick="showTab(2);">Comments</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <div class="row" id="profile-data">
                         <div class="col">
                             <div class="row">
                                 <div class="col">
                                     <img src="/static/portal_images/user{{user_data.id}}.jpg"	class="rounded-circle" width="100" height="100">
                                 </div>
+
                                 <div class="col">
                                     <p style="font-size:medium;font-weight: 500;">{{ user_data.name }}</p>
                                     <p id="follow-disp">{{follow_count}} Followers</p>
@@ -102,6 +144,9 @@
                             </form>
                         </div>
                     </div>
+
+                    <div hidden id="disqus_thread"></div>
+
                 </div>
             </div>
         </div>
@@ -131,5 +176,24 @@
 		</div>
 	</div>
 </div>
+
+<script>
+    /**
+    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+    *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables    */
+    /*
+    var disqus_config = function () {
+    this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+    this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+    */
+    (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://localhost-8000-lqfk4axmlz.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 
 {% endblock %}

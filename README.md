@@ -1,25 +1,27 @@
 # Pinterest-Flask
-A Pinterest Clone made using Flask in Python that deals with pins and has embedded AI at its core end.
 
-## Motivation 
-This project was made as a part of creating something unique with my Flask skills essentially after being proficient in developing applications with Django. Also, I am not that much
-fluent with developing Frontend but knew bits-and-pieces of Bootstrap. So, I wanted to create a masterpiece of my work and what could be more appealing than Pinterest clone. 
-Since Pinterest is all about organizing and rendering images this was a must-try.
+A Pinterest clone built with Flask — pins, profiles, follows and saves, with a
+collaborative-filtering recommendation engine at its core.
 
-### Code Dependancies
-The code dependancies for the project are : 
-<ul>
-<li>Python 3.10+
-<li>Flask 3
-<li>Flask-SQLAlchemy 3 for the SQLite database management
-<li>scikit-learn
-<li>Pillow
-<li>gunicorn
-<li>pandas 
-<li>numpy
-</ul>
+## Features
+
+- **Personalised home feed** — logged-in users see pins recommended by
+  user-user collaborative filtering (TruncatedSVD over interests, uploads and
+  visit history); everyone else gets the full catalogue
+- **Lazy-loaded feed** — the grid serves 24 pins at a time and streams more as
+  you scroll (IntersectionObserver + paginated fragment API), with native
+  `loading="lazy"` images throughout
+- **Full-text search** across pin titles, categories and descriptions
+- **Pins** — upload, categorise, save, download and share images
+- **Profiles & follows** — bios, websites, profile pictures, follower counts
+- **Admin portal** — daily advertisement and thought-of-the-day posts
+- **Security** — hashed passwords (Werkzeug/scrypt), CSRF-protected forms,
+  validated image uploads, environment-driven secrets
+- Responsive Bootstrap 5 UI, no jQuery
 
 ## Getting Started
+
+Requires Python 3.10+.
 
 ```bash
 python -m venv .venv
@@ -28,11 +30,27 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The app runs at http://localhost:8000. The bundled `user-data.sqlite3` ships with seed
-categories and images; tables (and newer columns) are created/migrated automatically
-on first run.
+The app runs at http://localhost:8000. The bundled `user-data.sqlite3` ships
+with seed categories and images; tables (and newer columns) are created and
+migrated automatically on first run.
 
-### Project layout
+For production, the Procfile runs `gunicorn wsgi:app`.
+
+### Configuration
+
+All configuration is via environment variables:
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `SECRET_KEY` | Flask session signing key | dev-only value — set in production |
+| `DATABASE_URL` | SQLAlchemy database URI | bundled SQLite file |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin login | `administrator@pinterest.com` / `admin` |
+| `FLASK_DEBUG` | Set to `0` to disable debug mode | `1` |
+
+Passwords are stored as salted hashes. Accounts created by older versions of
+the app are upgraded to hashed passwords automatically on their next login.
+
+## Project Layout
 
 ```
 app.py               # dev entry point (create_app)
@@ -46,6 +64,8 @@ pinterest/           # application package
   admin.py           #   admin promo posts
   recommender.py     #   collaborative filtering (background recompute)
 templates/           # Jinja templates (Bootstrap 5)
+static/              # stylesheet, JS, uploaded images
+data-mining/         # pickled similarity model
 tests/               # pytest suite
 ```
 
@@ -56,43 +76,39 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-### Configuration (environment variables)
+The suite covers routes, auth guards, password hashing and migration, pin
+posting with upload validation, saves/follows, search, feed pagination and
+CSRF enforcement.
 
-| Variable | Purpose | Default |
-|---|---|---|
-| `SECRET_KEY` | Flask session signing key | dev-only value — set in production |
-| `DATABASE_URL` | SQLAlchemy database URI | bundled SQLite file |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin login | `administrator@pinterest.com` / `admin` |
-| `FLASK_DEBUG` | Set to `0` to disable debug mode | `1` |
+## How the Recommendations Work
 
-Passwords are stored as salted hashes (Werkzeug). Accounts created by older versions
-of the app are upgraded to hashed passwords automatically on their next login.
+Each user's interests, uploads and pin visits are folded into a user × category
+crosstab matrix, reduced with TruncatedSVD, and turned into a user-user
+correlation matrix. The home feed surfaces pins viewed by the most similar
+users. The model is recomputed in a background thread whenever new content is
+posted, and new users fall back to the generic feed until they appear in the
+matrix.
 
-## AI feature
-I have used Collaborative filtering for generating recommended images in the home screen for logged-in users.
+## Motivation
 
-## Features 
-The project has most of the features as in original Pinterest site other than "BOARDS" section. 
-<ul>
-<li>Material UI (Bootstrap 5)
-<li>Full-text pin search
-<li>Lazy-loaded feed with infinite scroll
-<li>Save images(pins), follow users
-<li>Admin can upload specific advertisements and thoughts
-<li>Fluid experience
-<li>Track user activity for generating recommendations based on similar behaviour
-<li>CSRF-protected forms and hashed passwords
-</ul>
+This project was made as a part of creating something unique with my Flask
+skills after becoming proficient in developing applications with Django. I am
+not that fluent with frontend development but knew bits and pieces of
+Bootstrap, so I wanted to create a masterpiece of my work — and what could be
+more appealing than a Pinterest clone? Since Pinterest is all about organizing
+and rendering images, this was a must-try.
 
-## What is Left to be Done ?
-The project is still under development although it may look as if complete. <br>The following features need to be added.
-<ul><li>Search functionality (enhanced) <li>Usage of OpenCV to generated similar images in "MORE LIKE THIS" section
-<li>Optimization for mobile devices</ul>
+## Roadmap
 
-### Attributions 
-I would like to mention the following sources whose artifacts I have used to make this project
-<ul>
-<li>Pinterest for using the Logo on the site (Since this is just a small try-out clone attempt, so I wanted to keep things as original as possible)
-<li>https://github.com/wowthemesnet/template-pintereso-bootstrap-html repo has been very beneficial for generating the index template, although the entirety of it was modified 
-but  was helpful in giving the rough idea.
-</ul>
+- Boards (the one major Pinterest feature not implemented)
+- Visual similarity (e.g. image embeddings) for the "More like this" section
+- Move uploads to object storage instead of the local `static/` folder
+- Follow/save actions without full page reloads
+
+## Attributions
+
+- Pinterest, for the logo used on the site — this is a small educational
+  clone, so things were kept as close to the original as possible
+- [wowthemesnet/template-pintereso-bootstrap-html](https://github.com/wowthemesnet/template-pintereso-bootstrap-html)
+  provided the rough idea for the original index template, though the entirety
+  of it has since been rewritten

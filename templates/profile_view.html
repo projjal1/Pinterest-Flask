@@ -1,45 +1,33 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ user_data.name }} — Pinterest{% endblock %}
+
 {% block content %}
 
-<div class="container-fluid">
-<center><div class="jumbotron border-round-0 min-50vh" style="background-image:url('/static/img/background-banner.jfif');width: 1000px; height: 400px;">
-</div>
-<div class="container-fluid mb-4">
-	<img src="{{ user_data.avatar_url }}"	class="mt-neg100 mb-4 rounded-circle" width="150" height="150">
-	<h1 class="fw-bold title" style="font-size: 50px;">{{ user_data.name }}</h1>
-	{% if slug_data and slug_data.website %}
-	<b><p>Follow me at <a href="{{slug_data.website}}">{{slug_data.website}}</a></p></b>
-	{% endif %}
-	{% if slug_data and slug_data.bio %}
-	<p style="font-weight: 350; font-size: x-large;">{{slug_data.bio}}</p>
-	{% endif %}
-	<p style="font-weight: 600; font-size: larger;">{{follow_count}} followers : {{following_count}} following</p>
-	<p style="font-weight: 600; font-size: larger;"><b style="font-size: xx-large;">{{img_count}}</b> posts</p>
-</div>
-</center>
-</div>
+<div class="container-fluid text-center">
+  <div class="jumbotron border-round-0 profile-banner mx-auto"
+       style="background-image:url('{{ url_for('static', filename='img/background-banner.jfif') }}');"></div>
 
+  <div class="container-fluid mb-4">
+    <img class="mt-neg100 mb-4 rounded-circle" src="{{ user_data.avatar_url }}" width="150" height="150" alt="{{ user_data.name }}">
+    <h1 class="fw-bold display-5">{{ user_data.name }}</h1>
+    {% if slug_data and slug_data.website %}
+    <p class="fw-bold">Follow me at <a href="{{ slug_data.website }}" target="_blank" rel="noopener">{{ slug_data.website }}</a></p>
+    {% endif %}
+    {% if slug_data and slug_data.bio %}
+    <p class="fs-4 fw-light">{{ slug_data.bio }}</p>
+    {% endif %}
+    <p class="fw-semibold fs-5">{{ follow_count }} followers &middot; {{ following_count }} following</p>
+    <p class="fw-semibold fs-5"><span class="fs-3 fw-bold">{{ img_count }}</span> posts</p>
+  </div>
+</div>
 
 <div class="container-fluid mb-5">
-	<div class="row">
-		<div class="card-columns">
-
-			{% for image in images_list %}
-			<div class="card card-pin">
-				<div class="image-container">
-					<img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" loading="lazy" decoding="async">
-				</div>
-
-				<div class="card-body">
-					<a class="card-link" href="{{ url_for('main.view_photo',photo_id=image.id) }}"><h5 class="card-title title">{{ image.title }}</h5></a>
-				</div>
-			</div>
-			{% endfor %}
-		</div>
-	</div>
+  <div class="card-columns">
+    {% with compact = true %}
+    {% include '_pin_cards.html' %}
+    {% endwith %}
+  </div>
 </div>
-
-
 
 {% endblock %}

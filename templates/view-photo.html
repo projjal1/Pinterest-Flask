@@ -1,120 +1,83 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ img_data.title }} — Pinterest{% endblock %}
+
 {% block content %}
 
-<div class="container-fluid" style="margin-top: 20px;">
+<div class="container-fluid mt-4">
+  <a class="image-share d-inline-block mb-3" href="{{ url_for('main.index') }}" title="Back to feed">
+    <img src="{{ url_for('static', filename='img/go-back.png') }}" alt="Go back">
+  </a>
 
-    <div class="row">
-        <div class="col-sm-1">
-            <form action="{{ url_for('main.index') }}">
-                <button class="image-share"><img src="/static/img/go-back.png"></button>
+  <div class="card shadow photo-card mx-auto p-4">
+    <div class="row g-0">
+      <div class="col-md-5">
+        <img class="card-img" src="{{ img_data.image_url }}" alt="{{ img_data.title }}">
+      </div>
+      <div class="col-md-7">
+        <div class="card-body">
+
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <form action="{{ url_for('main.view_photo', photo_id=img_data.id) }}" method="POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="image-share" title="Download image">
+                <img width="24" src="{{ url_for('static', filename='img/3dots.png') }}" alt="Download">
+              </button>
             </form>
-        </div>
+            <a class="image-share" target="_blank" rel="noopener" title="Share on Twitter"
+               href="https://twitter.com/intent/tweet?text={{ ('Check out this pin: ' ~ img_data.title) | urlencode }}&amp;url={{ request.url | urlencode }}">
+              <img width="24" src="{{ url_for('static', filename='img/upload-icon.png') }}" alt="Share">
+            </a>
+            <form class="ms-auto" action="{{ url_for('main.save_pins', img_id=img_data.id) }}" method="GET">
+              <button class="image-save" {% if not flag_save_check %}disabled{% endif %}>
+                {% if flag_save_check %}Save{% else %}Saved{% endif %}
+              </button>
+            </form>
+          </div>
 
-    <div class="col-sm-2" style="padding-left: 100px;">
-    <center>
-    <div class="card shadow" style="width: 1000px;border:6px;border-radius: 25px;padding-top:0px;padding: 20px;">
-        <div class="row g-0">
-            <div class="col-sm-5">
-                <img class="card-img" src="{{ img_data.image_url }}" alt="{{img_data.title}}">
+          {% if img_data.links %}
+          <a class="d-block mb-3" href="{{ img_data.links }}" target="_blank" rel="noopener">{{ img_data.links }}</a>
+          {% endif %}
+
+          <h1 class="card-title fw-bold display-6">{{ img_data.title }}</h1>
+          <p class="card-text">{{ img_data.description }}</p>
+
+          <div class="row align-items-center mt-4" id="profile-data">
+            <div class="col-auto">
+              <img class="rounded-circle" src="{{ user_data.avatar_url }}" width="100" height="100" alt="{{ user_data.name }}">
             </div>
-            <div class="col-sm-7">
-                <div class="card-body">
-
-                    <div class="card-body" style="background-color: white">
-                        <div class="row">
-                            <div class="col">
-                                <form action="{{ url_for('main.view_photo',photo_id=img_data.id) }}" method="POST">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="image-share" title="Download image"><img width="100%" src="/static/img/3dots.png"></button>
-                                </form>
-                            </div>
-                            <div class="col" style="padding-right: 200px;">
-                                <button class="image-share" onclick="window.open(
-                                    'https://twitter.com/intent/tweet?text=Check out the pin at Pinterest on {{img_data.title}} at &url={{request.url}}',
-                                    'twitter-share-dialog',
-                                    'width=626,height=436');
-                                    return false;"><img width="40%" src="/static/img/upload-icon.png"></button>
-                            </div>
-                            <div class="col-sm">
-                                <form action="{{ url_for('main.save_pins',img_id=img_data.id) }}" method="GET">
-                                <button class="image-save"  {% if not flag_save_check %} disabled {% endif %}>
-                                    {% if flag_save_check %}    Save  {% else %}  Saved  {% endif %}
-                                </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    {% if img_data.links %}
-                    <a style="font-size:16px;" href="{{img_data.links}}">{{img_data.links}}</a>
-                    {% endif %}
-                    <br><br>
-                    <h1 class="card-title" style="font-weight: 750;font-size: 36px;">{{img_data.title}}</h1>
-                    <p class="card-text" style="font-size: 14px;">{{img_data.description}}</p>
-
-                    <br>
-
-                    <div class="row" id="profile-data">
-                        <div class="col">
-                            <div class="row">
-                                <div class="col">
-                                    <img src="{{ user_data.avatar_url }}"	class="rounded-circle" width="100" height="100">
-                                </div>
-
-                                <div class="col">
-                                    <p style="font-size:medium;font-weight: 500;">{{ user_data.name }}</p>
-                                    <p id="follow-disp">{{follow_count}} Followers</p>
-                                    <form action="{{url_for('main.profile_view',profile_email=user_data.email,action=1) }}" method="GET">
-                                        <button class="btn btn-primary">Visit Profile</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <form method="POST" action="{{ url_for('main.user_follow_action',email=user_data.email) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button id="follow-bar" style="padding: 15px 20px;
-                                background-color: lightgrey;
-                                border-radius: 20px;
-                                font-weight: 600;
-                                border:0;font-weight: 600;" {% if not flag_follow_check %} disabled {% endif %}>
-                                    {% if not flag_follow_check %} Followed {% else %} Follow {% endif %}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                </div>
+            <div class="col">
+              <p class="fw-semibold mb-1">{{ user_data.name }}</p>
+              <p class="mb-2" id="follow-disp">{{ follow_count }} Followers</p>
+              <form action="{{ url_for('main.profile_view', profile_email=user_data.email, action=1) }}" method="GET">
+                <button class="btn btn-primary btn-sm">Visit Profile</button>
+              </form>
             </div>
-        </div>
-    </div>
-    </center>
-    </div>
-    </div>
+            <div class="col-auto">
+              <form method="POST" action="{{ url_for('main.user_follow_action', email=user_data.email) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button id="follow-bar" class="btn btn-light rounded-pill fw-semibold px-4 py-2"
+                        {% if not flag_follow_check %}disabled{% endif %}>
+                  {% if not flag_follow_check %}Followed{% else %}Follow{% endif %}
+                </button>
+              </form>
+            </div>
+          </div>
 
-    <center><p style="padding-top: 50px;font-weight: 750;font-size: x-large;">More like this</p></center>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="text-center fw-bold mt-5">More like this</h2>
 </div>
 
 <div class="container-fluid mb-5">
-	<div class="row">
-		<div class="card-columns">
-
-			{% for image in images_list %}
-			<div class="card card-pin">
-				<div class="image-container">
-					<img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" loading="lazy" decoding="async">
-				</div>
-
-				<div class="card-body">
-					<a class="card-link" href="{{ url_for('main.view_photo',photo_id=image.id) }}"><h5 class="card-title title">{{ image.title }}</h5></a>
-				</div>
-			</div>
-			{% endfor %}
-		</div>
-	</div>
+  <div class="card-columns">
+    {% with compact = true %}
+    {% include '_pin_cards.html' %}
+    {% endwith %}
+  </div>
 </div>
 
 {% endblock %}

@@ -1,71 +1,59 @@
 {% extends 'base.html' %}
 
+{% block title %}Admin Post — Pinterest{% endblock %}
+
 {% block content %}
 
-<script>
-    function readurl1(input){
-        if (input.files && input.files[0]) {
-            document.getElementById('preview1').src = URL.createObjectURL(input.files[0]);
-        }
-    }
-    function readurl2(input){
-        if (input.files && input.files[0]) {
-            document.getElementById('preview2').src = URL.createObjectURL(input.files[0]);
-        }
-    }
-</script>
+<div class="container-fluid mt-4">
+  {% include '_alerts.html' %}
 
+  <div class="card shadow rounded-4 p-4 mx-auto" style="max-width: 1200px;">
+    <h1 class="text-center pb-3">Admin Post!</h1>
 
-<div class="container-fluid" style="margin-top: 20px;">
+    <form action="{{ url_for('admin.admin_listing') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    {% if error %}
-    <p class="error">{{error}}</p>
-    {% endif %}
-
-    <center>
-    <div class="card shadow" style="max-width: 1200px;border:6px;border-radius: 25px;padding: 20px;">
-        <h1 style="padding-bottom: 20px;">Admin Post!</h1>
-        <form action="{{ url_for('admin.admin_listing') }}" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="row g-0">
-            <div class="col">
-                <h3>Enter Thought of the Day</h3>
-                <div class="form-group">
-                    <label for="iname1">Title:</label>  <br>
-                    <input type="text" class="form-control"  id="iname1" name="iname1" placeholder="Enter Item Name.." required>
-                </div>
-                <div class="form-group">
-                    <label for="link1">Link:</label>  <br>
-                    <input type="text" class="form-control"  id="link1" name="link1" placeholder="Enter Link..">
-                </div>
-                <div class="form-group">
-                    <label for="img1">Upload Image</label> <br>
-                    <input type="file" id="img1" name='img1' accept="image/*" onchange="readurl1(this)" required>
-                </div>
-                <img  width="500" height="500" class="card-img" id="preview1" src="/static/img/default-img.jpg" alt="Thought of the day">
-            </div>
-            <div class="col" style="padding-left: 20px;">
-                <h3>Enter Advertisement</h3>
-                <div class="form-group">
-                    <label for="iname2">Title:</label>  <br>
-                    <input type="text" class="form-control"  id="iname2" name="iname2" placeholder="Enter Item Name.." required>
-                </div>
-                <div class="form-group">
-                    <label for="link2">Link:</label>  <br>
-                    <input type="text" class="form-control"  id="link2" name="link2" placeholder="Enter Link..">
-                </div>
-                <div class="form-group">
-                    <label for="img2">Upload Image</label> <br>
-                    <input type="file" id="img2" name='img2' accept="image/*" onchange="readurl2(this)" required>
-                </div>
-                <img  width="500" height="500" class="card-img" id="preview2" src="/static/img/default-img.jpg" alt="Advertisement">
-            </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h3>Enter Thought of the Day</h3>
+          <div class="mb-3">
+            <label class="form-label" for="iname1">Title</label>
+            <input type="text" class="form-control" id="iname1" name="iname1" placeholder="Enter a title.." required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="link1">Link</label>
+            <input type="text" class="form-control" id="link1" name="link1" placeholder="Enter a link..">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="img1">Upload Image</label>
+            <input type="file" class="form-control" id="img1" name="img1" accept="image/*" data-preview="preview1" required>
+          </div>
+          <img class="img-fluid card-img" id="preview1" src="{{ url_for('static', filename='img/default-img.jpg') }}" alt="Thought of the day preview">
         </div>
-        <br>
-        <input style="padding-top: 20px;" type="submit" class="btn btn-primary" value="Submit your promotions!">
-        </form>
-    </div>
-    </center>
+
+        <div class="col-md-6">
+          <h3>Enter Advertisement</h3>
+          <div class="mb-3">
+            <label class="form-label" for="iname2">Title</label>
+            <input type="text" class="form-control" id="iname2" name="iname2" placeholder="Enter a title.." required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="link2">Link</label>
+            <input type="text" class="form-control" id="link2" name="link2" placeholder="Enter a link..">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="img2">Upload Image</label>
+            <input type="file" class="form-control" id="img2" name="img2" accept="image/*" data-preview="preview2" required>
+          </div>
+          <img class="img-fluid card-img" id="preview2" src="{{ url_for('static', filename='img/default-img.jpg') }}" alt="Advertisement preview">
+        </div>
+      </div>
+
+      <div class="text-center pt-4">
+        <button type="submit" class="btn btn-primary">Submit your promotions!</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {% endblock %}

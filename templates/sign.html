@@ -1,47 +1,41 @@
 {% extends 'base.html' %}
 
+{% block title %}Login or Register — Pinterest{% endblock %}
+
 {% block content %}
 
-
 <div class="container-fluid">
+  {% include '_alerts.html' %}
 
-  {% if error %}
-  <p class="error">{{error}}</p>
-  {% endif %}
-
-<div class="jumbotron">
+  <div class="jumbotron">
     <div class="container-fluid">
       <h1 class="display-3">Login or Register</h1>
-      <p>Already have an account! Then login and explore Pins to your taste. If not try creating an account! </p>
+      <p>Already have an account? Then log in and explore pins to your taste. If not, try creating an account!</p>
     </div>
-</div>
+  </div>
 
-<div class="container-fluid">
-  <center>
-    <div class="row">
-      <div class="col-sm-5">
-        <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src="/static/img/signup.jpg" alt="Register" height="200" width="400">
-            <div class="card-body">
-              <h5 class="card-title" style="text-align: center !important;">Register User</h5>
-              <p class="card-text" style="text-align: center !important;">Create your account if you haven't already.</p>
-              <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
-            </div>
-        </div>
-      </div>
-      <div class="col-sm-7">
-        <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src="/static/img/signin.png" alt="Signin" height="200" width="400">
-            <div class="card-body">
-              <h5 class="card-title" style="text-align: center !important;">SignIn User</h5>
-              <p class="card-text" style="text-align: center !important;">Already created account! Now login.</p>
-              <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
-            </div>
+  <div class="row justify-content-center g-4">
+    <div class="col-auto">
+      <div class="card" style="width: 18rem;">
+        <img class="card-img-top" src="{{ url_for('static', filename='img/signup.jpg') }}" alt="Register" height="200">
+        <div class="card-body text-center">
+          <h5 class="card-title">Register User</h5>
+          <p class="card-text">Create your account if you haven't already.</p>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
         </div>
       </div>
     </div>
-    </center>
-</div>
+    <div class="col-auto">
+      <div class="card" style="width: 18rem;">
+        <img class="card-img-top" src="{{ url_for('static', filename='img/signin.png') }}" alt="Sign in" height="200">
+        <div class="card-body text-center">
+          <h5 class="card-title">Sign In</h5>
+          <p class="card-text">Already created an account? Now log in.</p>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

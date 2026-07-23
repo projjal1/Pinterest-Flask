@@ -1,68 +1,56 @@
 {% extends 'base.html' %}
 
+{% block title %}Register — Pinterest{% endblock %}
+
 {% block content %}
 
 <div class="container-fluid">
-<div class="jumbotron">
+  <div class="jumbotron">
     <div class="container-fluid">
       <h1 class="display-3">Register User</h1>
-      <p>Get started by creating an account on our website and create or explore our Pins.</p>
+      <p>Get started by creating an account on our website and create or explore our pins.</p>
     </div>
-</div>
+  </div>
 
-{% if error %}
-<p class="error">{{error}}</p>
-{% endif %}
+  {% include '_alerts.html' %}
 
-<form action='{{ url_for("auth.register")}}' method="POST">
+  <form action="{{ url_for('auth.register') }}" method="POST" class="mx-auto" style="max-width: 900px;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
     <div class="row">
-        <div class="col">
-            <div class="form-group">
-                <label for="firstname">First Name:</label>  <br>
-                <input type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." required>
-            </div>
-        </div>
-        <div class="col">
-            <div class="form-group">
-                <label for="lastname">Last Name:</label>  <br>
-                <input type="text" class="form-control" id="lastname" name="lname" placeholder="last name.." >
-            </div>
-        </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="firstname">First Name</label>
+        <input type="text" class="form-control" id="firstname" name="fname" placeholder="First name.." required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="lastname">Last Name</label>
+        <input type="text" class="form-control" id="lastname" name="lname" placeholder="Last name..">
+      </div>
     </div>
 
     <div class="row">
-        <div class="col">
-            <div class="form-group">
-                <label for="email-add">Email:</label>  <br>
-                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" required>
-            </div>
-        </div>
-        <div class="col">
-            <div class="form-group">
-                <label for="password">Password:</label>  <br>
-                <input type="password" class="form-control"  id="password" name="pwd" required>
-            </div>
-        </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="email-add">Email</label>
+        <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" class="form-control" id="password" name="pwd" required>
+      </div>
     </div>
 
+    <fieldset class="mb-4">
+      <legend class="form-label fs-6">Your Interests</legend>
+      {% for cat in categories %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="int" value="{{ cat.name }}" id="interest-{{ cat.id }}">
+        <label class="form-check-label" for="interest-{{ cat.id }}">{{ cat.name }}</label>
+      </div>
+      {% endfor %}
+    </fieldset>
 
-    <div class="form-group">
-        <label>Your Interests:</label>  <br>
-
-        {% for cat in categories %}
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="int"  value="{{cat.name}}" id="interest-{{cat.id}}">
-            <label class="form-check-label" for="interest-{{cat.id}}">
-              {{cat.name}}
-            </label>
-        </div>
-        {% endfor %}
-
-    </div>
-
-    <button class="w-100 btn btn-lg btn-primary" type="submit" >Register</button>
-</form>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Register</button>
+  </form>
 </div>
 
 {% endblock %}

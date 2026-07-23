@@ -1,0 +1,235 @@
+/* ===================================================================
+   Pinterest clone stylesheet
+   Extracted from the old inline <style> block in base.html and pruned
+   of unused rules.
+   =================================================================== */
+
+/* ----- Global layout ----- */
+body {
+  padding-top: 100px;
+}
+
+a {
+  transition: all 0.2s;
+}
+
+.container-fluid {
+  width: 94%;
+  max-width: 94%;
+  margin: 0 auto;
+}
+
+p {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ----- Navigation ----- */
+.navbar {
+  padding: 1rem 2rem;
+}
+
+.fixed-top {
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.nav-link,
+.dropdown-item {
+  font-weight: 700;
+}
+
+.nav-link,
+#search-input {
+  font-size: large;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+#search-input {
+  height: 50px;
+  border-radius: 50px;
+  padding: 0 10px 0 50px;
+  background-color: #dcdcdc;
+  background-image: url("../img/search.png");
+  background-position: 10px 8px;
+  background-repeat: no-repeat;
+}
+
+/* ----- Bootstrap 4 compat (helpers the layout still uses) ----- */
+.jumbotron {
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  background-color: #e9ecef;
+  border-radius: 0.3rem;
+}
+
+/* ----- Masonry pin grid (card-columns was removed in Bootstrap 5) ----- */
+.card-columns {
+  column-gap: 1.25rem;
+}
+
+.card-columns .card {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 767.98px) {
+  .card-columns {
+    column-count: 2;
+  }
+  #search-input {
+    width: 250px;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-columns {
+    column-count: 3;
+  }
+  #search-input {
+    width: 350px;
+  }
+}
+
+@media (min-width: 992px) {
+  .card-columns {
+    column-count: 4;
+  }
+  #search-input {
+    width: 400px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-columns {
+    column-count: 5;
+  }
+  #search-input {
+    width: 750px;
+  }
+}
+
+.exclusive {
+  column-count: 2;
+}
+
+/* ----- Pin cards ----- */
+.card-pin {
+  border: 0;
+}
+
+.card-img {
+  border-radius: 5%;
+}
+
+.card-img:hover {
+  cursor: zoom-in;
+  background: #000;
+  opacity: 0.6;
+}
+
+.card-link {
+  color: #000;
+  text-decoration: none;
+}
+
+/* ----- Hover overlays on feed cards ----- */
+.image-container {
+  position: relative;
+}
+
+.overlay2,
+.overlay3 {
+  position: absolute;
+  bottom: 0;
+  transition: 0.5s ease;
+  opacity: 0;
+  color: #fff;
+  font-size: 20px;
+  padding: 20px;
+  border-radius: 5%;
+}
+
+.overlay2 {
+  width: 100%;
+  text-align: right;
+}
+
+.overlay3 {
+  width: 20%;
+  text-align: left;
+}
+
+.image-container:hover .overlay2,
+.image-container:hover .overlay3 {
+  opacity: 1;
+}
+
+/* ----- Pin action buttons ----- */
+.image-save {
+  padding: 15px;
+  background-color: #e60023;
+  color: #fff;
+  border-radius: 40%;
+  font-weight: 700;
+  border: 0;
+}
+
+.image-share,
+.image-share:active {
+  display: inline-block;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+  border: 0;
+}
+
+.image-share:hover {
+  background-color: lightgray;
+}
+
+.image-link {
+  padding: 5px 20px;
+  background-color: #fff;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 0;
+}
+
+/* ----- Photo detail page ----- */
+.photo-card {
+  max-width: 1000px;
+  border-radius: 25px;
+}
+
+/* ----- Profile page ----- */
+.profile-banner {
+  width: 100%;
+  max-width: 1000px;
+  height: 400px;
+  background-size: cover;
+  background-position: center;
+}
+
+.mt-neg100 {
+  margin-top: -100px;
+}
+
+.border-round-0 {
+  border-radius: 0;
+}
+
+/* ----- Floating "new pin" button ----- */
+#element {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+}
+
+/* ----- Footer ----- */
+footer.footer {
+  border-top: 1px solid #f1f1f1;
+}

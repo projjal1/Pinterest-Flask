@@ -1,48 +1,43 @@
 {% extends 'base.html' %}
 
+{% block title %}Complete Your Profile — Pinterest{% endblock %}
+
 {% block content %}
 
-<script>
-    function readurl(input){
-        if (input.files && input.files[0]) {
-            document.getElementById('preview').src = URL.createObjectURL(input.files[0]);
-        }
-    }
-</script>
-
 <div class="container-fluid">
-    <main class="form-signin">
-        <form action="{{ url_for('main.profile') }}" method="POST" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <img class="mb-4" src="/static/img/logo.png" alt="Pinterest" height="100">
-          <h1 class="h3 mb-3 fw-normal">Complete Your Profile</h1>
-          <p>People visiting your profile will see the following info</p>
-            <br><br>
+  <main class="mx-auto mt-4" style="max-width: 720px;">
+    <form action="{{ url_for('main.profile') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="container" style="padding-bottom: 250px;">
-            <div class="col" style="float:left; width:30%">
-                <img id="preview" src="/static/img/default-img.jpg" width="200" height="200">
-            </div>
-            <div class="form-group" style="float:left; width:40%; margin-left:30px">
-                <label for="image">Upload Image</label> <br>
-                <input type="file" id="image" name='img' accept="image/*" onchange="readurl(this)">
-            </div>
-            </div>
+      <div class="text-center mb-4">
+        <img class="mb-3" src="{{ url_for('static', filename='img/logo.png') }}" alt="Pinterest" height="100">
+        <h1 class="h3 fw-normal">Complete Your Profile</h1>
+        <p>People visiting your profile will see the following info</p>
+      </div>
 
+      <div class="row align-items-center mb-4">
+        <div class="col-sm-5 text-center">
+          <img id="preview" class="rounded-circle object-fit-cover" src="{{ url_for('static', filename='img/default-img.jpg') }}" width="200" height="200" alt="Profile picture preview">
+        </div>
+        <div class="col-sm-7">
+          <label class="form-label" for="image">Upload Image</label>
+          <input type="file" class="form-control" id="image" name="img" accept="image/*" data-preview="preview">
+        </div>
+      </div>
 
-          <div class="form-group">
-            <label for="profile-bio">About your profile:</label>  <br>
-            <textarea rows="4" class="form-control" id="profile-bio" name="bio" placeholder="Enter something about you"></textarea>
-          </div>
+      <div class="mb-3">
+        <label class="form-label" for="profile-bio">About your profile</label>
+        <textarea rows="4" class="form-control" id="profile-bio" name="bio" placeholder="Enter something about you"></textarea>
+      </div>
 
-          <div class="form-group">
-            <label for="website-url">Enter your website link:</label>  <br>
-            <input type="text" class="form-control"  id="website-url" name="url" placeholder="https://www.example.com">
-          </div>
+      <div class="mb-3">
+        <label class="form-label" for="website-url">Your website link</label>
+        <input type="text" class="form-control" id="website-url" name="url" placeholder="https://www.example.com">
+      </div>
 
-          <button class="w-100 btn btn-lg btn-primary" type="submit">Add Information</button>
-        </form>
-    </main>
+      <button class="w-100 btn btn-lg btn-primary" type="submit">Add Information</button>
+    </form>
+  </main>
 </div>
 
 {% endblock %}

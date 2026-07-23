@@ -1,121 +1,68 @@
 {% extends 'base.html' %}
 
+{% block title %}{% if search_query %}Search: {{ search_query }} — Pinterest{% else %}Pinterest{% endif %}{% endblock %}
+
 {% block content %}
 
+{% set explore_links = ['Lifestyle', 'Food', 'Home', 'Travel', 'Astronomy'] %}
+{% set more_links = ['Nature', 'Cooking', 'Fashion', 'Wellness', 'Dieting', 'Motorcade', 'Science'] %}
+
 <section class="mt-4 mb-5">
-    <div class="container-fluid mb-4">
+  <div class="container-fluid mb-4">
 
-        {% if search_query %}
-        <h1 class="fw-bold title">Results for &ldquo;{{ search_query }}&rdquo;</h1>
-        {% if not images_list %}
-        <p class="text-muted">No pins matched your search. Try another keyword or browse the categories below.</p>
-        {% endif %}
-        {% else %}
-        <h1 class="fw-bold title">Explore</h1>
-        {% endif %}
-        <div class="row">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white ps-2 pe-2">
-            <button class="navbar-light navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExplore" aria-controls="navbarsExplore" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsExplore">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.index', category='Lifestyle') }}">Lifestyle</a>
-                    </li>
-                    <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.index', category='Food') }}">Food</a>
-                    </li>
-                    <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.index', category='Home') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.index', category='Travel') }}">Travel</a>
-                    </li>
-                    <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.index', category='Astronomy') }}">Astronomy</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false">More</a>
-                    <div class="dropdown-menu shadow-lg" aria-labelledby="dropdown01">
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Nature') }}">Nature</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Cooking') }}">Cooking</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Fashion') }}">Fashion</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Wellness') }}">Wellness</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Dieting') }}">Dieting</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Motorcade') }}">Motorcade</a>
-                        <a class="dropdown-item" href="{{ url_for('main.index', category='Science') }}">Science</a>
-                    </div>
-                    </li>
-                </ul>
-            </div>
-            </nav>
-        </div>
-    </div>
-    <div class="container-fluid mb-5">
-        <div class="row">
-            <div class="card-columns" id="pin-grid">
-                {% include '_pin_cards.html' %}
-            </div>
-        </div>
+    {% if search_query %}
+    <h1 class="fw-bold">Results for &ldquo;{{ search_query }}&rdquo;</h1>
+    {% if not images_list %}
+    <p class="text-muted">No pins matched your search. Try another keyword or browse the categories below.</p>
+    {% endif %}
+    {% else %}
+    <h1 class="fw-bold">Explore</h1>
+    {% endif %}
 
-        <!-- Infinite-scroll sentinel: when it nears the viewport the next page is fetched -->
-        <div id="feed-sentinel" class="text-center py-4"
-             data-seed="{{ feed_seed or 0 }}"
-             data-category="{{ feed_category or '' }}"
-             data-q="{{ search_query or '' }}"
-             data-has-more="{{ 1 if has_more else 0 }}">
-            <div class="spinner-border text-danger" role="status" id="feed-spinner" hidden>
-                <span class="visually-hidden">Loading more pins...</span>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white ps-2 pe-2">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExplore" aria-controls="navbarsExplore" aria-expanded="false" aria-label="Toggle categories">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExplore">
+        <ul class="navbar-nav">
+          {% for name in explore_links %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('main.index', category=name) }}">{{ name }}</a>
+          </li>
+          {% endfor %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+            <div class="dropdown-menu shadow-lg" aria-labelledby="dropdown01">
+              {% for name in more_links %}
+              <a class="dropdown-item" href="{{ url_for('main.index', category=name) }}">{{ name }}</a>
+              {% endfor %}
             </div>
-        </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <div class="container-fluid mb-5">
+    {% if not images_list and not search_query %}
+    <p class="text-muted text-center py-5">No pins here yet — be the first to post one!</p>
+    {% endif %}
+
+    <div class="card-columns" id="pin-grid">
+      {% include '_pin_cards.html' %}
     </div>
+
+    <!-- Infinite-scroll sentinel: when it nears the viewport, main.js fetches the next page -->
+    <div id="feed-sentinel" class="text-center py-4"
+         data-seed="{{ feed_seed or 0 }}"
+         data-category="{{ feed_category or '' }}"
+         data-q="{{ search_query or '' }}"
+         data-has-more="{{ 1 if has_more else 0 }}">
+      <div class="spinner-border text-danger" role="status" id="feed-spinner" hidden>
+        <span class="visually-hidden">Loading more pins...</span>
+      </div>
+    </div>
+  </div>
 </section>
-
-<script>
-    (function () {
-        const sentinel = document.getElementById('feed-sentinel');
-        const grid = document.getElementById('pin-grid');
-        const spinner = document.getElementById('feed-spinner');
-
-        let page = 1;
-        let loading = false;
-        let hasMore = sentinel.dataset.hasMore === '1';
-
-        async function loadNextPage() {
-            if (loading || !hasMore) return;
-            loading = true;
-            spinner.hidden = false;
-            try {
-                const params = new URLSearchParams({
-                    page: page + 1,
-                    seed: sentinel.dataset.seed,
-                    category: sentinel.dataset.category,
-                    q: sentinel.dataset.q,
-                });
-                const resp = await fetch('{{ url_for("main.api_pins") }}?' + params);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                grid.insertAdjacentHTML('beforeend', data.html);
-                page += 1;
-                hasMore = data.has_more;
-            } catch (err) {
-                console.error('Failed to load more pins:', err);
-                hasMore = false;  // stop retry-looping on a broken endpoint
-            } finally {
-                spinner.hidden = true;
-                loading = false;
-                if (!hasMore) observer.disconnect();
-            }
-        }
-
-        // Start fetching one viewport-height before the sentinel scrolls in
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) loadNextPage();
-        }, { rootMargin: '100% 0px' });
-
-        if (hasMore) observer.observe(sentinel);
-    })();
-</script>
 
 {% endblock %}

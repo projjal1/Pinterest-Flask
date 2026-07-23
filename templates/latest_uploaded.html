@@ -4,7 +4,7 @@
 
 <div class="container-fluid mb-5">
     <center><h1 style="padding-top:40px;font-weight: 750;">Celebrating Sustainability at Pinterest 🌱</h1></center>
-    
+
     {% for image in images_list %}
     <center><h3 style="padding-top: 50px;">{{image.date}}</h3></center>
 	<div class="row" style="padding-top: 50px;padding-left: 200px;padding-right: 200px;">
@@ -13,7 +13,7 @@
 
 			<div class="card card-pin shadow" style="border-radius: 25px;">
 				<div class="image-container">
-					<img class="card-img image" src="/static/admin_promo/adv{{image.id}}.jpg" alt="{{image.advertisement_title}}" >
+					<img class="card-img image" src="{{ image.advert_image_url }}" alt="{{image.advertisement_title}}" >
 				</div>
 
 				<div class="card-body">
@@ -22,7 +22,7 @@
 			</div>
             <div class="card card-pin shadow" style="border-radius: 25px;">
 				<div class="image-container">
-					<img class="card-img image" src="/static/admin_promo/thought{{image.id}}.jpg" alt="{{image.thought_title}}" >
+					<img class="card-img image" src="{{ image.thought_image_url }}" alt="{{image.thought_title}}" >
 				</div>
 
 				<div class="card-body">

@@ -29,7 +29,32 @@ python app.py
 ```
 
 The app runs at http://localhost:8000. The bundled `user-data.sqlite3` ships with seed
-categories and images; tables are created automatically on first run if missing.
+categories and images; tables (and newer columns) are created/migrated automatically
+on first run.
+
+### Project layout
+
+```
+app.py               # dev entry point (create_app)
+wsgi.py              # production entry point (gunicorn wsgi:app)
+pinterest/           # application package
+  __init__.py        #   app factory, config, schema migration
+  extensions.py      #   db + CSRF extension instances
+  models.py          #   ORM models with relationships
+  auth.py            #   login / register / logout blueprint
+  main.py            #   feed, search, pins, profiles, follows
+  admin.py           #   admin promo posts
+  recommender.py     #   collaborative filtering (background recompute)
+templates/           # Jinja templates (Bootstrap 5)
+tests/               # pytest suite
+```
+
+### Running the tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
 
 ### Configuration (environment variables)
 
@@ -49,12 +74,13 @@ I have used Collaborative filtering for generating recommended images in the hom
 ## Features 
 The project has most of the features as in original Pinterest site other than "BOARDS" section. 
 <ul>
-<li>Material UI
-<li>Implemented Disqus comment system
-<li>Save images(pins)
+<li>Material UI (Bootstrap 5)
+<li>Full-text pin search
+<li>Save images(pins), follow users
 <li>Admin can upload specific advertisements and thoughts
 <li>Fluid experience
 <li>Track user activity for generating recommendations based on similar behaviour
+<li>CSRF-protected forms and hashed passwords
 </ul>
 
 ## What is Left to be Done ?

@@ -14,12 +14,13 @@
 <p class="error">{{error}}</p>
 {% endif %}
 
-<form action='{{ url_for("register")}}' method="POST">
+<form action='{{ url_for("auth.register")}}' method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="row">
         <div class="col">
             <div class="form-group">
                 <label for="firstname">First Name:</label>  <br>
-                <input type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." >
+                <input type="text" class="form-control"  id="firstname" name="fname" placeholder="first name.." required>
             </div>
         </div>
         <div class="col">
@@ -34,32 +35,32 @@
         <div class="col">
             <div class="form-group">
                 <label for="email-add">Email:</label>  <br>
-                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" >
+                <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" required>
             </div>
         </div>
         <div class="col">
             <div class="form-group">
                 <label for="password">Password:</label>  <br>
-                <input type="password" class="form-control"  id="password" name="pwd" >
+                <input type="password" class="form-control"  id="password" name="pwd" required>
             </div>
         </div>
     </div>
 
 
     <div class="form-group">
-        <label for="interests">Your Interests:</label>  <br>
+        <label>Your Interests:</label>  <br>
 
         {% for cat in categories %}
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="int"  value="{{cat.name}}" id="interests">
-            <label class="form-check-label" for="interests">
+            <input class="form-check-input" type="checkbox" name="int"  value="{{cat.name}}" id="interest-{{cat.id}}">
+            <label class="form-check-label" for="interest-{{cat.id}}">
               {{cat.name}}
             </label>
         </div>
         {% endfor %}
-        
+
     </div>
-    
+
     <button class="w-100 btn btn-lg btn-primary" type="submit" >Register</button>
 </form>
 </div>

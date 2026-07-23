@@ -15,19 +15,20 @@
 <p class="error">{{error}}</p>
 {% endif %}
 
-<main class="form-signin" center>
-    <form action="{{ url_for('login') }}" method="POST">
+<main class="form-signin">
+    <form action="{{ url_for('auth.login') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <img class="mb-4" src="/static/img/logo.png" alt="Pinterest" height="100">
       <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-  
+
       <div class="form-group">
         <label for="email-add">Email:</label>  <br>
-        <input type="email" class="form-control" id="email-add" name="email" placeholder="Email">
+        <input type="email" class="form-control" id="email-add" name="email" placeholder="Email" required>
       </div>
 
       <div class="form-group">
         <label for="password">Password:</label>  <br>
-        <input type="password" class="form-control"  id="password" name="pwd">
+        <input type="password" class="form-control"  id="password" name="pwd" required>
       </div>
 
       <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>

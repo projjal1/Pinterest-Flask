@@ -8,7 +8,7 @@
     <div class="container-fluid">
       <h1 class="display-3">List Image</h1>
       <p>Enter details for Image to be listed on our portal. <br>
-          All items shall be displayed in order and appropriately. <br>Enter associated information so that 
+          All items shall be displayed in order and appropriately. <br>Enter associated information so that
         website can render images with ease and according to category. </p>
     </div>
 </div>
@@ -24,57 +24,52 @@
 <script>
     function readurl(input){
         if (input.files && input.files[0]) {
-        var reader = new FileReader();
-
-        reader.onload = function (e) {
-            $('#preview')
-                .attr('src', e.target.result);
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+            document.getElementById('preview').src = URL.createObjectURL(input.files[0]);
+        }
     }
 </script>
 
 <div class="container-fluid" style="margin-top: 20px;">
-    <div class="card shadow" style="width: 1100px;border:6px;border-radius: 25px;padding: 20px;">
-    
-    <div class="row no-gutters">
+    <div class="card shadow" style="max-width: 1100px;border:6px;border-radius: 25px;padding: 20px;">
+
+    <div class="row g-0">
         <div class="col">
             <img src="/static/img/default-img.jpg" id="preview" width="500" height="500">
         </div>
         <div class="col">
-            <form action='{{ url_for("post") }}' method="POST" enctype="multipart/form-data">
+            <form action='{{ url_for("main.post") }}' method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="itemname">Title:</label>  <br>
-                    <input type="text" class="form-control"  id="itemname" name="iname" placeholder="Enter Item Name..">
+                    <input type="text" class="form-control"  id="itemname" name="iname" placeholder="Enter Item Name.." required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="description">Description:</label>  <br>
                     <textarea rows="6" class="form-control" id="description" name="desc" placeholder="Enter description.."></textarea>
                 </div>
-                    
+
                 <div class="form-group">
-                    <label for="stocking">Links:</label>  <br>
-                    <textarea rows="3" class="form-control" id="description" name="links" placeholder="Enter links.."></textarea>
+                    <label for="links">Links:</label>  <br>
+                    <textarea rows="3" class="form-control" id="links" name="links" placeholder="Enter links.."></textarea>
                 </div>
-            
+
                 <div class="form-group">
                     <label for="image">Upload Image</label> <br>
-                    <input type="file" id="image" name='img' onchange="readurl(this)">
+                    <input type="file" id="image" name='img' accept="image/*" onchange="readurl(this)" required>
                 </div>
 
                 <div class="form-group">
                     <label for="category">Category</label> <br>
-                    <select name="cat" id="category">
+                    <select class="form-select" name="cat" id="category">
 
                         {% for cat in categories %}
                         <option value="{{cat.name}}">{{cat.name}}</option>
                         {% endfor %}
-                        
+
                     </select>
                 </div>
-            
+
                 <button class="btn btn-primary" type="submit">List Item</button>
             </form>
         </div>

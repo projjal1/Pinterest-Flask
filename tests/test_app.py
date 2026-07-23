@@ -1,12 +1,19 @@
 """Route, auth and feature tests for the Pinterest clone."""
 import io
 import os
+import re
 
 from PIL import Image as PILImage
 
 from conftest import login
 from pinterest.extensions import db
+from pinterest.main import PAGE_SIZE
 from pinterest.models import follow_user, images, saved_pins, users
+
+
+def pin_ids(payload):
+    """Pin ids linked from rendered feed card markup."""
+    return set(re.findall(rb'href="/view/(\d+)"', payload))
 
 
 def png_bytes():
@@ -193,6 +200,55 @@ def test_profile_update_and_own_profile_view(app, client):
     r = client.get("/profile")
     assert r.status_code == 200
     assert b"I take photos" in r.data
+
+
+# ------------------------------------------------------ lazy-loaded feed
+def seed_many_pins(app, count):
+    with app.app_context():
+        alice = users.query.filter_by(email="alice@example.com").first()
+        for i in range(count):
+            db.session.add(images(title=f"Extra Pin {i}", fields="Science",
+                                  description="filler", links="",
+                                  user_id=alice.id))
+        db.session.commit()
+        return images.query.count()
+
+
+def test_home_serves_one_page_with_sentinel(app, client):
+    total = seed_many_pins(app, PAGE_SIZE + 6)
+
+    r = client.get("/?seed=42")
+    assert r.status_code == 200
+    assert len(pin_ids(r.data)) == PAGE_SIZE
+    assert b'id="feed-sentinel"' in r.data
+    assert b'data-has-more="1"' in r.data
+    assert total > PAGE_SIZE
+
+
+def test_api_pins_pagination_is_stable_and_disjoint(app, client):
+    total = seed_many_pins(app, PAGE_SIZE + 6)
+
+    first = client.get("/?seed=42")
+    second = client.get("/api/pins?page=2&seed=42&category=All")
+    assert second.status_code == 200
+    data = second.get_json()
+    assert data["has_more"] is False  # everything fits in two pages
+
+    page1, page2 = pin_ids(first.data), pin_ids(data["html"].encode())
+    assert page1.isdisjoint(page2)  # seeded shuffle: no repeats
+    assert len(page1 | page2) == total  # ...and nothing missing
+
+
+def test_api_pins_search_pagination(client):
+    r = client.get("/api/pins?page=1&q=pasta")
+    data = r.get_json()
+    assert "Pasta Carbonara" in data["html"]
+    assert data["has_more"] is False
+
+
+def test_feed_images_are_lazy(client):
+    r = client.get("/")
+    assert b'loading="lazy"' in r.data
 
 
 # -------------------------------------------------------------------- CSRF

@@ -1,0 +1,27 @@
+{# Feed pin cards — rendered by home.html and served as fragments by /api/pins #}
+{% for image in images_list %}
+<div class="card card-pin">
+    <div class="image-container">
+        <img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" loading="lazy" decoding="async">
+        <div class="overlay2">
+            <button class="image-share" onclick="window.open(
+                'https://twitter.com/intent/tweet?text=Check out the pin at Pinterest on {{image.title}} at &url={{ url_for('main.view_photo', photo_id=image.id, _external=True) }}',
+                'twitter-share-dialog',
+                'width=626,height=436');
+                return false;"  >
+            <img width="40%" src="/static/img/upload-icon.png"></button>
+        </div>
+        {% if image.links %}
+        <div class="overlay3">
+            <form method="GET" action="{{ image.links }}">
+                <button class="image-link">Link</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card-body">
+        <a class="card-link" href="{{ url_for('main.view_photo',photo_id=image.id) }}"><h5 class="card-title title">{{ image.title }}</h5></a>
+    </div>
+</div>
+{% endfor %}

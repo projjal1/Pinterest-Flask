@@ -16,37 +16,79 @@ from .utils import (current_user, display_name, login_required, normalize_url,
 bp = Blueprint("main", __name__)
 
 
+# Pins served per page of the lazily-loaded feed
+PAGE_SIZE = 24
+
+
+def _feed_records(category):
+    """Full ordered record list for a feed variant (small catalogue, so
+    slicing an in-memory list keeps the seeded shuffle simple)."""
+    if category == "All" and "email" not in session:
+        return images.query.all()
+    if category == "All" and "email" in session:
+        if session["username"] != "Admin":
+            # Personalised feed, falling back to everything for new users
+            return recommended_images(session["email"]) or images.query.all()
+        return images.query.all()[-5:]
+    return images.query.filter_by(fields=category).all()
+
+
+def _search_records(query):
+    like = f"%{query}%"
+    return images.query.filter(
+        db.or_(images.title.ilike(like),
+               images.fields.ilike(like),
+               images.description.ilike(like))).all()
+
+
+def _paginate(records, page):
+    start = (page - 1) * PAGE_SIZE
+    return records[start:start + PAGE_SIZE], start + PAGE_SIZE < len(records)
+
+
 @bp.route('/', defaults={'category': "All"})
 @bp.route('/<category>')
 def index(category="All"):
-    if category == "All" and "email" not in session:
-        record_images = images.query.all()
-    elif category == "All" and "email" in session:
-        if session["username"] != "Admin":
-            # Personalised feed, falling back to everything for new users
-            record_images = recommended_images(session["email"]) or images.query.all()
-        else:
-            record_images = images.query.all()[-5:]
-    else:
-        record_images = images.query.filter_by(fields=category).all()
+    # A per-visit seed keeps the shuffle stable across subsequent
+    # /api/pins page requests, so no pin repeats or goes missing
+    seed = request.args.get('seed', type=int) or random.randrange(1_000_000)
+    record_images = _feed_records(category)
+    random.Random(seed).shuffle(record_images)
+    page_items, has_more = _paginate(record_images, 1)
 
-    random.shuffle(record_images)
     return render_template("home.html", display_nm=display_name(),
-                           images_list=record_images)
+                           images_list=page_items, has_more=has_more,
+                           feed_seed=seed, feed_category=category)
 
 
 @bp.route('/search')
 def search():
     query = (request.args.get('q') or "").strip()
-    results = []
-    if query:
-        like = f"%{query}%"
-        results = images.query.filter(
-            db.or_(images.title.ilike(like),
-                   images.fields.ilike(like),
-                   images.description.ilike(like))).all()
+    results = _search_records(query) if query else []
+    page_items, has_more = _paginate(results, 1)
     return render_template("home.html", display_nm=display_name(),
-                           images_list=results, search_query=query)
+                           images_list=page_items, has_more=has_more,
+                           search_query=query, feed_seed=0)
+
+
+@bp.route('/api/pins')
+def api_pins():
+    """Next page of feed cards for the infinite scroller, as an HTML
+    fragment plus a has_more flag."""
+    page = max(request.args.get('page', 1, type=int), 1)
+    seed = request.args.get('seed', 0, type=int)
+    query = (request.args.get('q') or "").strip()
+    category = request.args.get('category') or "All"
+
+    if query:
+        records = _search_records(query)
+    else:
+        records = _feed_records(category)
+        random.Random(seed).shuffle(records)
+
+    page_items, has_more = _paginate(records, page)
+    html = render_template("_pin_cards.html", images_list=page_items)
+    return {"html": html, "has_more": has_more}
 
 
 @bp.route('/today')

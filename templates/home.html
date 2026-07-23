@@ -54,38 +54,68 @@
     </div>
     <div class="container-fluid mb-5">
         <div class="row">
-            <div class="card-columns">
+            <div class="card-columns" id="pin-grid">
+                {% include '_pin_cards.html' %}
+            </div>
+        </div>
 
-                {% for image in images_list %}
-                <div class="card card-pin">
-                    <div class="image-container">
-                        <img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" >
-                        <div class="overlay2">
-                            <button class="image-share" onclick="window.open(
-                                'https://twitter.com/intent/tweet?text=Check out the pin at Pinterest on {{image.title}} at &url={{ url_for('main.view_photo', photo_id=image.id, _external=True) }}',
-                                'twitter-share-dialog',
-                                'width=626,height=436');
-                                return false;"  >
-                            <img width="40%" src="/static/img/upload-icon.png"></button>
-                        </div>
-                        {% if image.links %}
-                        <div class="overlay3">
-                            <form method="GET" action="{{ image.links }}">
-                                <button class="image-link">Link</button>
-                            </form>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="card-body">
-                        <a class="card-link" href="{{ url_for('main.view_photo',photo_id=image.id) }}"><h5 class="card-title title">{{ image.title }}</h5></a>
-                    </div>
-                </div>
-                {% endfor %}
+        <!-- Infinite-scroll sentinel: when it nears the viewport the next page is fetched -->
+        <div id="feed-sentinel" class="text-center py-4"
+             data-seed="{{ feed_seed or 0 }}"
+             data-category="{{ feed_category or '' }}"
+             data-q="{{ search_query or '' }}"
+             data-has-more="{{ 1 if has_more else 0 }}">
+            <div class="spinner-border text-danger" role="status" id="feed-spinner" hidden>
+                <span class="visually-hidden">Loading more pins...</span>
             </div>
         </div>
     </div>
 </section>
 
+<script>
+    (function () {
+        const sentinel = document.getElementById('feed-sentinel');
+        const grid = document.getElementById('pin-grid');
+        const spinner = document.getElementById('feed-spinner');
+
+        let page = 1;
+        let loading = false;
+        let hasMore = sentinel.dataset.hasMore === '1';
+
+        async function loadNextPage() {
+            if (loading || !hasMore) return;
+            loading = true;
+            spinner.hidden = false;
+            try {
+                const params = new URLSearchParams({
+                    page: page + 1,
+                    seed: sentinel.dataset.seed,
+                    category: sentinel.dataset.category,
+                    q: sentinel.dataset.q,
+                });
+                const resp = await fetch('{{ url_for("main.api_pins") }}?' + params);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                grid.insertAdjacentHTML('beforeend', data.html);
+                page += 1;
+                hasMore = data.has_more;
+            } catch (err) {
+                console.error('Failed to load more pins:', err);
+                hasMore = false;  // stop retry-looping on a broken endpoint
+            } finally {
+                spinner.hidden = true;
+                loading = false;
+                if (!hasMore) observer.disconnect();
+            }
+        }
+
+        // Start fetching one viewport-height before the sentinel scrolls in
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) loadNextPage();
+        }, { rootMargin: '100% 0px' });
+
+        if (hasMore) observer.observe(sentinel);
+    })();
+</script>
 
 {% endblock %}

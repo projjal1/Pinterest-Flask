@@ -28,7 +28,7 @@
 			{% for image in images_list %}
 			<div class="card card-pin">
 				<div class="image-container">
-					<img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" >
+					<img class="card-img image" src="{{ image.image_url }}" alt="{{image.title}}" loading="lazy" decoding="async">
 				</div>
 
 				<div class="card-body">

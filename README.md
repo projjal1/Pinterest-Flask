@@ -76,6 +76,7 @@ The project has most of the features as in original Pinterest site other than "B
 <ul>
 <li>Material UI (Bootstrap 5)
 <li>Full-text pin search
+<li>Lazy-loaded feed with infinite scroll
 <li>Save images(pins), follow users
 <li>Admin can upload specific advertisements and thoughts
 <li>Fluid experience

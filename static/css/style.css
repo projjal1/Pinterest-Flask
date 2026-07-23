@@ -112,10 +112,6 @@ p {
   }
 }
 
-.exclusive {
-  column-count: 2;
-}
-
 /* ----- Pin cards ----- */
 .card-pin {
   border: 0;

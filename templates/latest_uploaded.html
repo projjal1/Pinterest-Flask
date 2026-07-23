@@ -15,27 +15,31 @@
   <h3 class="text-center pt-5">{{ post.date }}</h3>
   <div class="row justify-content-center pt-4">
     <div class="col-lg-8">
-      <div class="card-columns exclusive">
+      <div class="row row-cols-1 row-cols-md-2 g-4">
 
-        <div class="card card-pin shadow rounded-4">
-          <div class="image-container">
-            <img class="card-img image" src="{{ post.advert_image_url }}" alt="{{ post.advertisement_title }}" loading="lazy" decoding="async">
-          </div>
-          <div class="card-body">
-            <a class="card-link" href="{{ post.advertisement_link }}" target="_blank" rel="noopener">
-              <h5 class="card-title">{{ post.advertisement_title }}</h5>
-            </a>
+        <div class="col">
+          <div class="card card-pin shadow rounded-4 h-100">
+            <div class="image-container">
+              <img class="card-img image" src="{{ post.advert_image_url }}" alt="{{ post.advertisement_title }}" loading="lazy" decoding="async">
+            </div>
+            <div class="card-body">
+              <a class="card-link" href="{{ post.advertisement_link }}" target="_blank" rel="noopener">
+                <h5 class="card-title">{{ post.advertisement_title }}</h5>
+              </a>
+            </div>
           </div>
         </div>
 
-        <div class="card card-pin shadow rounded-4">
-          <div class="image-container">
-            <img class="card-img image" src="{{ post.thought_image_url }}" alt="{{ post.thought_title }}" loading="lazy" decoding="async">
-          </div>
-          <div class="card-body">
-            <a class="card-link" href="{{ post.thought_link }}" target="_blank" rel="noopener">
-              <h5 class="card-title">{{ post.thought_title }}</h5>
-            </a>
+        <div class="col">
+          <div class="card card-pin shadow rounded-4 h-100">
+            <div class="image-container">
+              <img class="card-img image" src="{{ post.thought_image_url }}" alt="{{ post.thought_title }}" loading="lazy" decoding="async">
+            </div>
+            <div class="card-body">
+              <a class="card-link" href="{{ post.thought_link }}" target="_blank" rel="noopener">
+                <h5 class="card-title">{{ post.thought_title }}</h5>
+              </a>
+            </div>
           </div>
         </div>
 

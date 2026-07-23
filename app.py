@@ -268,8 +268,13 @@ def recommended_images(email):
             track_user_images = pickle.load(file)
         user_list = list(final_set.index)
         idx = user_list.index(email)
-    except (FileNotFoundError, EOFError, ValueError):
-        return []  # no model yet, or user not in the matrix
+    except ValueError:
+        return []  # user not in the matrix yet
+    except Exception as exc:
+        # Missing or stale pickles (e.g. written by an older pandas) must
+        # never take down the home feed — fall back to the generic feed
+        app.logger.warning("Recommendation model unavailable: %s", exc)
+        return []
 
     threshold = 0.3
     user_select = Counter()

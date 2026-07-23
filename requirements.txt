@@ -1,8 +1,9 @@
-Flask 
-sklearn
-scikit-learn
-Pillow
-gunicorn
-Flask-SQLAlchemy
-pandas 
-numpy
+Flask>=3.0,<4
+Flask-SQLAlchemy>=3.1,<4
+SQLAlchemy>=2.0
+Werkzeug>=3.0
+Pillow>=10.3
+gunicorn>=22.0
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4

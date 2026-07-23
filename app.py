@@ -1,32 +1,54 @@
-from os import error
+"""Pinterest clone built with Flask.
+
+Image pins, user profiles, follows, saved pins and a collaborative-filtering
+recommendation engine (TruncatedSVD over user/interest/visit data).
+"""
 import os
-import re
-from flask import Flask, render_template, session, request, redirect, send_from_directory
-from flask.helpers import url_for
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql.operators import distinct_op
-from PIL import Image
-import random
-import pandas as pd
-import numpy as np
-from sklearn.decomposition import TruncatedSVD
 import pickle
+import random
 from collections import Counter
 from datetime import datetime
+from functools import wraps
+from urllib.parse import urlparse
+
+import numpy as np
+import pandas as pd
+from flask import (Flask, abort, redirect, render_template, request,
+                   send_from_directory, session, url_for)
+from flask_sqlalchemy import SQLAlchemy
+from PIL import Image, UnidentifiedImageError
+from sklearn.decomposition import TruncatedSVD
+from werkzeug.security import check_password_hash, generate_password_hash
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PORTAL_IMAGE_DIR = os.path.join(BASE_DIR, "static", "portal_images")
+ADMIN_PROMO_DIR = os.path.join(BASE_DIR, "static", "admin_promo")
+DATA_MINING_DIR = os.path.join(BASE_DIR, "data-mining")
 
 # Flask app configs
-app=Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user-data.sqlite3'
-app.secret_key = 'soverysecret'
+app = Flask(__name__)
+# Absolute path so the bundled DB keeps working with Flask-SQLAlchemy 3.x,
+# which resolves relative sqlite paths against the instance/ folder.
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///" + os.path.join(BASE_DIR, "user-data.sqlite3"))
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB upload limit
 
-#Database 
+# Admin credentials — override in production via environment variables
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "administrator@pinterest.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
+
+# Database
 db = SQLAlchemy(app)
+
+
 class users(db.Model):
-    id = db.Column('user_id', db.Integer, primary_key = True)
+    id = db.Column('user_id', db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100))
-    password = db.Column(db.String(100))
+    password = db.Column(db.String(255))  # stores a salted hash, not plaintext
     interests = db.Column(db.String(200))
+
 
 class images(db.Model):
     id = db.Column('image_id', db.Integer, primary_key=True)
@@ -34,22 +56,26 @@ class images(db.Model):
     fields = db.Column(db.String(300))
     description = db.Column(db.String(1000))
     links = db.Column(db.String(200))
-    user_id  = db.Column(db.Integer)
+    user_id = db.Column(db.Integer)
+
 
 class user_slugs(db.Model):
-    id = db.Column('slug_id', db.Integer, primary_key = True)
+    id = db.Column('slug_id', db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     bio = db.Column(db.String(1000))
     website = db.Column(db.String(100))
+
 
 class pin_category(db.Model):
     id = db.Column('category_id', db.Integer, primary_key=True)
     name = db.Column(db.String(200))
 
+
 class track_visits(db.Model):
     id = db.Column('visit_id', db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     img_id = db.Column(db.Integer)
+
 
 class admin_post(db.Model):
     id = db.Column('admin_id', db.Integer, primary_key=True)
@@ -59,494 +85,528 @@ class admin_post(db.Model):
     thought_link = db.Column(db.String(100))
     date = db.Column(db.String(100))
 
+
 class follow_user(db.Model):
     id = db.Column('follow_id', db.Integer, primary_key=True)
     user_email = db.Column(db.String(100))
     follower_email = db.Column(db.String(100))
+
 
 class saved_pins(db.Model):
     id = db.Column('save_id', db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     img_id = db.Column(db.Integer)
 
-#Run only to create initial .sqlite database 
-#db.create_all()
+
+# Create tables on first run (no-op if they already exist)
+with app.app_context():
+    db.create_all()
 
 
-#Data extractors 
+# ------------------------------------------------------------------ helpers
+@app.context_processor
+def inject_year():
+    """Footer copyright year for base.html."""
+    return {"year": datetime.now().year}
+
+
+def display_name():
+    return session.get("username", "Author")
+
+
+def current_user():
+    if "email" not in session:
+        return None
+    return users.query.filter_by(email=session["email"]).first()
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "username" not in session:
+            return render_template("sign.html", display_nm="Author",
+                                   error="You need to log in first.")
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if session.get("username") != "Admin":
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def normalize_url(link):
+    """Prefix a scheme when missing instead of blindly concatenating."""
+    link = (link or "").strip()
+    if link and not urlparse(link).scheme:
+        link = "https://" + link
+    return link
+
+
+def open_image_upload(file_storage):
+    """Return a JPEG-safe PIL image from an upload, or None if invalid."""
+    if file_storage is None or file_storage.filename == "":
+        return None
+    try:
+        img = Image.open(file_storage)
+        return img.convert("RGB")  # PNG/RGBA/palette uploads save fine as JPEG
+    except (UnidentifiedImageError, OSError):
+        return None
+
+
+def verify_password(user, pwd):
+    """Check a password hash; transparently upgrade legacy plaintext rows."""
+    stored = user.password or ""
+    if stored.startswith(("pbkdf2:", "scrypt:")):
+        return check_password_hash(stored, pwd)
+    if stored and stored == pwd:  # account created before hashing existed
+        user.password = generate_password_hash(pwd)
+        db.session.commit()
+        return True
+    return False
+
+
+# ---------------------------------------------------------- data extractors
 def extract_users():
-    records=users.query.all()
-    id,email,interests=[],[],[]
-    for rec in records:
-        var_id,var_name=rec.id,rec.email
-        for interest in rec.interests.split(","):
-            id.append(var_id)
-            email.append(var_name)
-            interests.append(interest)
-
-    df=pd.DataFrame({"user_id":pd.Series(id),"name":pd.Series(email),"category":pd.Series(interests),"flag":pd.Series(np.ones(len(email)))})
+    rows = []
+    for rec in users.query.all():
+        for interest in (rec.interests or "").split(","):
+            interest = interest.strip()
+            if interest:
+                rows.append((rec.id, rec.email, interest))
+    df = pd.DataFrame(rows, columns=["user_id", "name", "category"])
+    df["flag"] = np.ones(len(df))
     return df
+
 
 def extract_images():
-    records=images.query.all()
-    id,title,fields,user_ids=[],[],[],[]
-    for rec in records:
-        id.append(rec.id)
-        title.append(rec.title)
-        fields.append(rec.fields)
-        user_ids.append(rec.user_id)
-
-    df=pd.DataFrame({"img_id":pd.Series(id),"title":pd.Series(title),"category":pd.Series(fields),"user_id":pd.Series(user_ids),"img_flag":pd.Series(np.ones(len(title)))})
+    rows = [(rec.id, rec.title, rec.fields, rec.user_id)
+            for rec in images.query.all()]
+    df = pd.DataFrame(rows, columns=["img_id", "title", "category", "user_id"])
+    df["img_flag"] = np.ones(len(df))
     return df
+
 
 def extract_tracks():
-    records=track_visits.query.all()
-    id,user_ids,img_ids=[],[],[]
-    for rec in records:
-        id.append(rec.id)
-        user_ids.append(rec.user_id)
-        img_ids.append(rec.img_id)
-
-    df=pd.DataFrame({"visit_id":pd.Series(id),"user_id":pd.Series(user_ids),"img_id":pd.Series(img_ids),"visits":pd.Series(np.ones(len(id)))})
-    return df 
-
-def extract_category():
-    records=pin_category.query.all()
-    id,name=[],[]
-    for rec in records:
-        id.append(rec.id)
-        name.append(rec.name)
-
-    df=pd.DataFrame({"cat_id":pd.Series(id),"category":pd.Series(name)})
+    rows = [(rec.id, rec.user_id, rec.img_id)
+            for rec in track_visits.query.all()]
+    df = pd.DataFrame(rows, columns=["visit_id", "user_id", "img_id"])
+    df["visits"] = np.ones(len(df))
     return df
 
-#calls to compute ratings crosstab matrix and perform Pearson Correlation
-#user-user similarity find out
+
+def extract_category():
+    rows = [(rec.id, rec.name) for rec in pin_category.query.all()]
+    return pd.DataFrame(rows, columns=["cat_id", "category"])
+
+
+# Compute the ratings crosstab matrix and user-user similarity scores
 def compute_user_similarity():
-    user_data=extract_users()
-    image_data=extract_images()
-    track_data=extract_tracks()
-    category_data=extract_category()
+    user_data = extract_users()
+    image_data = extract_images()
+    track_data = extract_tracks()
+    category_data = extract_category()
 
-    #user_merge_category=pd.merge(user_data[["name","category"]],category_data[["category"]],on="category")
-    user_merge_category=pd.merge(user_data[["name","category","flag"]],category_data[["category"]],on="category")
-    user_category = user_merge_category.pivot_table(values='flag', index='name', columns='category', fill_value=0)
-    combined_dataset=pd.merge(user_data[["user_id","name"]],image_data[["img_id","user_id","category","img_flag"]],on="user_id")
-    user_images = combined_dataset.pivot_table(values= 'img_flag', index='name', columns='category', fill_value=0)
-    track_images=pd.merge(image_data[['img_id','title']],track_data[['img_id','user_id']],on="img_id")
-    track_user_images=pd.merge(track_images,user_data[["user_id","name"]],on="user_id")
+    if user_data.empty or image_data.empty:
+        return False
 
-    final_set=pd.merge(user_category,user_images,on="name")
-    from sklearn.decomposition import TruncatedSVD
+    user_merge_category = pd.merge(user_data[["name", "category", "flag"]],
+                                   category_data[["category"]], on="category")
+    user_category = user_merge_category.pivot_table(
+        values='flag', index='name', columns='category', fill_value=0)
+    combined_dataset = pd.merge(
+        user_data[["user_id", "name"]],
+        image_data[["img_id", "user_id", "category", "img_flag"]], on="user_id")
+    user_images = combined_dataset.pivot_table(
+        values='img_flag', index='name', columns='category', fill_value=0)
+    track_images = pd.merge(image_data[['img_id', 'title']],
+                            track_data[['img_id', 'user_id']], on="img_id")
+    track_user_images = pd.merge(track_images, user_data[["user_id", "name"]],
+                                 on="user_id")
 
-    #generate SVD matrix
-    SVD = TruncatedSVD(n_components=5, random_state=17)
-    resultant_matrix = SVD.fit_transform(final_set)
-    #Computing similarity scores
+    final_set = pd.merge(user_category, user_images, on="name")
+
+    # TruncatedSVD needs fewer components than features and 2+ users
+    n_components = min(5, final_set.shape[1] - 1, final_set.shape[0] - 1)
+    if n_components < 1:
+        return False
+
+    svd = TruncatedSVD(n_components=n_components, random_state=17)
+    resultant_matrix = svd.fit_transform(final_set)
     corr_mat = np.corrcoef(resultant_matrix)
-    import pickle
-    # save array
-    with open('data-mining/user-corr.pkl','wb') as file:
-        pickle.dump(corr_mat,file)
-    # save track_data
-    with open('data-mining/track_data.pkl','wb') as file:
-        pickle.dump(track_user_images,file)
-    # save final set 
-    with open("data-mining/final_set.pkl",'wb') as file:
-        pickle.dump(final_set,file)
 
-#compute_user_similarity()
-#Function to return images based on user-user collaborative filtering
-def call(nm):
-    with open('data-mining/final_set.pkl','rb') as file:
-        final_set=pickle.load(file)
-    with open('data-mining/user-corr.pkl','rb') as file:
-        corr_mat=pickle.load(file)
-    with open('data-mining/track_data.pkl','rb') as file:
-        track_user_images=pickle.load(file)
+    os.makedirs(DATA_MINING_DIR, exist_ok=True)
+    with open(os.path.join(DATA_MINING_DIR, 'user-corr.pkl'), 'wb') as file:
+        pickle.dump(corr_mat, file)
+    with open(os.path.join(DATA_MINING_DIR, 'track_data.pkl'), 'wb') as file:
+        pickle.dump(track_user_images, file)
+    with open(os.path.join(DATA_MINING_DIR, 'final_set.pkl'), 'wb') as file:
+        pickle.dump(final_set, file)
+    return True
 
-    threshold=0.3
-    user_list=list(final_set.index)
 
-    idx=user_list.index(nm)
-    user_select=Counter()
-    
-    itr=0
-    for score in corr_mat[idx]:
-        if score>0.98 or score<threshold:
-            itr+=1
-        else:
-            user_select[itr]=score
-            itr+=1
+def refresh_similarity():
+    """Recompute recommendations, but never let it break a user request."""
+    try:
+        compute_user_similarity()
+    except Exception as exc:  # small-data edge cases shouldn't 500 the app
+        app.logger.warning("Similarity recompute skipped: %s", exc)
 
-    #Common users
-    common_users=5    #Change it to generate more data
 
-    image_names,ids=[],[]
-    for k,u in user_select.most_common(common_users):
-        email=user_list[k]
-        row=track_user_images[track_user_images["name"]==email]
-        
-        img_names=row.title.values
-        id_imgs=row.img_id.values
-        
-        for i in range(len(img_names)):
-            nm=img_names[i]
-            idsers=id_imgs[i]
-            if nm in image_names:
-                continue 
-            else:
-                image_names.append(nm)
-                ids.append(idsers)
+# Images picked through user-user collaborative filtering
+def recommended_images(email):
+    try:
+        with open(os.path.join(DATA_MINING_DIR, 'final_set.pkl'), 'rb') as file:
+            final_set = pickle.load(file)
+        with open(os.path.join(DATA_MINING_DIR, 'user-corr.pkl'), 'rb') as file:
+            corr_mat = pickle.load(file)
+        with open(os.path.join(DATA_MINING_DIR, 'track_data.pkl'), 'rb') as file:
+            track_user_images = pickle.load(file)
+        user_list = list(final_set.index)
+        idx = user_list.index(email)
+    except (FileNotFoundError, EOFError, ValueError):
+        return []  # no model yet, or user not in the matrix
 
-    ls_objs=[]
-    for var in ids:
-        print(id,images.query.filter_by(id=str(var)).all())
-        ls_objs.append(images.query.filter_by(id=str(var)).all()[0])
-    return ls_objs
+    threshold = 0.3
+    user_select = Counter()
+    for itr, score in enumerate(corr_mat[idx]):
+        if threshold <= score <= 0.98:  # skip self-matches and weak matches
+            user_select[itr] = score
 
-#Admin post 
-@app.route("/admin_post",methods=["GET","POST"])
+    common_users = 5  # change to pull pins from more similar users
+
+    ids = []
+    for k, _ in user_select.most_common(common_users):
+        row = track_user_images[track_user_images["name"] == user_list[k]]
+        for img_id in row.img_id.values:
+            if img_id not in ids:
+                ids.append(img_id)
+
+    objs = (db.session.get(images, int(img_id)) for img_id in ids)
+    return [obj for obj in objs if obj is not None]
+
+
+# ------------------------------------------------------------------- routes
+# Admin post
+@app.route("/admin_post", methods=["GET", "POST"])
+@admin_required
 def admin_listing():
-    if request.method=="GET":
-        return render_template("admin_post.html",display_nm="Admin")
-    else:
-        advertisment_title=request.form.get('iname2')
-        advertisment_link=request.form.get('link2')
-        thought_title=request.form.get('iname1')
-        thought_link=request.form.get('link1')
-        img_path_adv=request.files['img2']
-        img_path_thought=request.files['img1']
+    if request.method == "GET":
+        return render_template("admin_post.html", display_nm="Admin")
 
-        #Creating date-string 
-        dt=datetime.now()
-        format=dt.strftime("%d %B, %Y")
+    advertisement_title = request.form.get('iname2')
+    advertisement_link = normalize_url(request.form.get('link2'))
+    thought_title = request.form.get('iname1')
+    thought_link = normalize_url(request.form.get('link1'))
 
-        admin_obj=admin_post(advertisement_link=advertisment_link,advertisement_title=advertisment_title,thought_title=thought_title,thought_link=thought_link,date=format)
-        db.session.add(admin_obj)
-        db.session.commit()
+    # Validate both uploads before touching the database
+    img_adv = open_image_upload(request.files.get('img2'))
+    img_thought = open_image_upload(request.files.get('img1'))
+    if img_adv is None or img_thought is None:
+        return render_template("admin_post.html", display_nm="Admin",
+                               error="Both uploads must be valid image files.")
 
+    admin_obj = admin_post(advertisement_link=advertisement_link,
+                           advertisement_title=advertisement_title,
+                           thought_title=thought_title,
+                           thought_link=thought_link,
+                           date=datetime.now().strftime("%d %B, %Y"))
+    db.session.add(admin_obj)
+    db.session.commit()
 
-        img1=Image.open(img_path_adv)
-        img2=Image.open(img_path_thought)
+    img_adv.save(os.path.join(ADMIN_PROMO_DIR, f"adv{admin_obj.id}.jpg"))
+    img_thought.save(os.path.join(ADMIN_PROMO_DIR, f"thought{admin_obj.id}.jpg"))
 
-        #retreive id 
-        admin_rec=admin_post.query.filter_by(date=format).all()
-        admin_rec=admin_rec[0]
-        admin_id=admin_rec.id
-        
-        img1.save('static/admin_promo/adv'+str(admin_id)+".jpg")
-        img2.save('static/admin_promo/thought'+str(admin_id)+".jpg")
-
-        return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 
-#Routing functions
+# Routing functions
 @app.route('/', defaults={'category': "All"})
 @app.route('/<category>')
 def index(category="All"):
-    if category=="All" and "email" not in session:
-        record_images=images.query.all()
-    elif category=="All" and "email" in session:
-        if session["username"]!="Admin":
-            record_images=call(session["email"])
+    if category == "All" and "email" not in session:
+        record_images = images.query.all()
+    elif category == "All" and "email" in session:
+        if session["username"] != "Admin":
+            # Personalised feed, falling back to everything for new users
+            record_images = recommended_images(session["email"]) or images.query.all()
         else:
-            record_images=images.query.all()[-5:]
+            record_images = images.query.all()[-5:]
     else:
-        record_images=images.query.filter_by(fields=category).all()
+        record_images = images.query.filter_by(fields=category).all()
 
     random.shuffle(record_images)
+    return render_template("home.html", display_nm=display_name(),
+                           images_list=record_images)
 
-    if "username" in session:
-        return render_template("home.html", display_nm=session["username"],images_list=record_images)
-    else:
-        return render_template("home.html", display_nm="Author",images_list=record_images)
 
-@app.route('/follow/<email>',methods=["POST"])
+@app.route('/follow/<email>', methods=["POST"])
 def user_follow_action(email):
-    if request.method=="GET":
-        return redirect(url_for('index'))
-
     if "username" not in session:
-        return render_template("sign.html",display_nm="Author",error="You need to log in to follow users.")
+        return render_template("sign.html", display_nm="Author",
+                               error="You need to log in to follow users.")
 
-    u_email=session["email"]
-    obj=follow_user(user_email=email,follower_email=u_email)
-    db.session.add(obj)
-    db.session.commit()
+    u_email = session["email"]
+    already = follow_user.query.filter_by(user_email=email,
+                                          follower_email=u_email).first()
+    if u_email != email and already is None:
+        db.session.add(follow_user(user_email=email, follower_email=u_email))
+        db.session.commit()
 
-    return redirect(url_for('profile_view',profile_email=email,action=1))
+    return redirect(url_for('profile_view', profile_email=email, action=1))
+
 
 @app.route('/today')
 def exclusive():
-    if "username" in session:
-        nm=session["username"]
-    else:
-        nm="Author"
-    
-    listing_images=admin_post.query.all()[::-1]
-    return render_template("latest_uploaded.html",display_nm=nm,images_list=listing_images)
+    listing_images = admin_post.query.all()[::-1]
+    return render_template("latest_uploaded.html", display_nm=display_name(),
+                           images_list=listing_images)
 
-#Save pins
-@app.route('/save_pins/<img_id>')
+
+# Save pins
+@app.route('/save_pins/<int:img_id>')
 def save_pins(img_id):
     if "username" not in session:
-        return render_template("sign.html",display_nm="Author",error="You need to log in to save images.")
-    
-    #Save into db
-    user_rec=users.query.filter_by(email=session["email"]).all()
-    obj=saved_pins(user_id=user_rec[0].id,img_id=img_id)
-    db.session.add(obj)
-    db.session.commit ()
+        return render_template("sign.html", display_nm="Author",
+                               error="You need to log in to save images.")
 
-    return redirect(url_for('view_photo',photo_id=img_id))
-
-@app.route('/view/<photo_id>', methods=["POST","GET"])
-def view_photo(photo_id):
-    if request.method=="POST":
-        #Append dir path
-        downloads = os.path.join(app.root_path, 'static/portal_images/')
-        # Returning file from appended path
-        return send_from_directory(directory=downloads, path=str(photo_id)+".jpg")
-
-    if "username" not in session:
-        nm="Author"
-    else:
-        nm=session["username"]
-        if nm!="Admin":
-            #Track visit 
-            user_visited=users.query.filter_by(email=session["email"]).all()
-            visit_obj = track_visits(user_id=user_visited[0].id, img_id=photo_id)
-            db.session.add(visit_obj)
+    user_rec = current_user()
+    if user_rec is not None:
+        already = saved_pins.query.filter_by(user_id=user_rec.id,
+                                             img_id=img_id).first()
+        if already is None:
+            db.session.add(saved_pins(user_id=user_rec.id, img_id=img_id))
             db.session.commit()
-    
-    record_images=images.query.filter_by(id=photo_id).all()
-    user_id=record_images[0].user_id
-    user_details=users.query.filter_by(id=user_id).all()
-    img_obj=images.query.filter_by(fields=record_images[0].fields).all()
-    img_obj.pop(img_obj.index(record_images[0]))
+
+    return redirect(url_for('view_photo', photo_id=img_id))
+
+
+@app.route('/view/<int:photo_id>', methods=["POST", "GET"])
+def view_photo(photo_id):
+    if request.method == "POST":
+        # Download the original image file
+        return send_from_directory(PORTAL_IMAGE_DIR, f"{photo_id}.jpg",
+                                   as_attachment=True)
+
+    img_data = images.query.filter_by(id=photo_id).first_or_404()
+    user_details = users.query.filter_by(id=img_data.user_id).first_or_404()
+
+    nm = display_name()
+    if "username" in session and nm != "Admin":
+        # Track visit for the recommendation engine
+        visitor = current_user()
+        if visitor is not None:
+            db.session.add(track_visits(user_id=visitor.id, img_id=photo_id))
+            db.session.commit()
+
+    # "More like this": other pins from the same category
+    img_obj = images.query.filter_by(fields=img_data.fields).all()
+    img_obj = [rec for rec in img_obj if rec.id != img_data.id]
     random.shuffle(img_obj)
-    obj_follow=follow_user.query.filter_by(user_email=user_details[0].email).all()
-    
-    if "username" not in session:
-        flag_follow=1
-        flag_save=1
+    follow_count = follow_user.query.filter_by(
+        user_email=user_details.email).count()
 
-        return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0], 
-    images_list=img_obj[:20], follow_count = len(obj_follow), flag_follow_check = flag_follow, flag_save_check=flag_save)
+    flag_follow, flag_save = 1, 1
+    if "username" in session:
+        viewer = current_user()
+        if session["email"] == user_details.email:
+            flag_follow = 0
+        elif follow_user.query.filter_by(user_email=user_details.email,
+                                         follower_email=session["email"]).first():
+            flag_follow = 0
+        if viewer is not None and saved_pins.query.filter_by(
+                user_id=viewer.id, img_id=photo_id).first():
+            flag_save = 0
 
-    obj_follow_check=follow_user.query.filter_by(user_email=user_details[0].email, follower_email=session["email"]).all()
-    obj_users=users.query.filter_by(email=session["email"]).all()
-    obj_save_check=saved_pins.query.filter_by(user_id=obj_users[0].id,img_id=photo_id).all()
+    return render_template("view-photo.html", display_nm=nm, img_data=img_data,
+                           user_data=user_details, images_list=img_obj[:20],
+                           follow_count=follow_count,
+                           flag_follow_check=flag_follow,
+                           flag_save_check=flag_save)
 
-    if session["email"]==user_details[0].email:
-        flag_follow=0
-    elif len(obj_follow_check)>0:
-        flag_follow=0
-    else:
-        flag_follow=1
 
-    if len(obj_save_check)>0:
-        flag_save=0
-    else:
-        flag_save=1
-
-    return render_template("view-photo.html",display_nm=nm, img_data=record_images[0], user_data=user_details[0], 
-    images_list=img_obj[:20], follow_count = len(obj_follow), flag_follow_check = flag_follow, flag_save_check=flag_save)
-
-@app.route('/author',methods=["GET","POST"])
+@app.route('/author', methods=["GET", "POST"])
+@login_required
 def profile():
-    nm=session["username"]
+    nm = session["username"]
 
-    if request.method=="GET":
-        return render_template("profile.html",display_nm=nm)
-    elif request.method=="":
-        #Get input infos
-        bio=request.form.get("bio")
-        website=request.form.get("url")
-        img=request.files["img"]
-        read_img=Image.open(img)
+    if request.method == "GET":
+        return render_template("profile.html", display_nm=nm)
 
-        #Query 
-        user_obj=users.query.filter_by(email=session["email"],name=session["username"]).all()
-        user_id=user_obj[0].id
+    bio = request.form.get("bio")
+    website = normalize_url(request.form.get("url"))
 
-        read_img.save("static/portal_images/user"+str(user_id)+".jpg")
+    user_obj = current_user()
+    if user_obj is None:
+        return redirect(url_for('logout'))
 
-        links=website
-        if 'www.' not in links:
-            links='www.'+links
-        if 'https' not in links or 'http' not in links:
-            links='https://'+links
+    # Profile picture is optional
+    read_img = open_image_upload(request.files.get("img"))
+    if read_img is not None:
+        read_img.save(os.path.join(PORTAL_IMAGE_DIR, f"user{user_obj.id}.jpg"))
 
-        #Create slug object
-        obj=user_slugs(user_id=user_id,bio=bio,website=links)
-        db.session.add(obj)
-        db.session.commit()
-
-        #Call function to generate updated ratings crosstab
-        compute_user_similarity()
-
-        return redirect(url_for('index'))
-
-
-#Action means whether it's for login or for view of profile 
-#Action 0 means to login and 1 means login to view profile
-
-@app.route(r'/profile', defaults={'profile_email': "Default", "action":0})
-@app.route(r'/profile/<profile_email>/<action>')
-def profile_view(profile_email,action):
-    if "username" not in session:
-        nm="Author"
-        if action==0:
-            return render_template("sign.html",display_nm=nm)
-        else:
-            return render_template("sign.html",display_nm=nm,error="You need to log in to view profile of users.")
-    elif session["username"]=="Admin":
-        return redirect(url_for('index'))
+    # Create the slug record, or update it if the user already has one
+    slug = user_slugs.query.filter_by(user_id=user_obj.id).first()
+    if slug is None:
+        db.session.add(user_slugs(user_id=user_obj.id, bio=bio, website=website))
     else:
-        nm=session["username"]
-        
-        if profile_email=="Default":
-            email=session["email"]
-        else:
-            email=profile_email
-        obj=users.query.filter_by(email=email).all()
-        user_id=obj[0].id
-        slug_obj=user_slugs.query.filter_by(user_id=user_id).all()
-        img_obj=images.query.filter_by(user_id=user_id).all()
+        slug.bio = bio
+        slug.website = website
+    db.session.commit()
 
-        len_posts=len(img_obj)
+    refresh_similarity()
+    return redirect(url_for('index'))
 
-        #Saved pins images 
-        obj_users=users.query.filter_by(email=session["email"]).all()
-        obj_saved_pins=saved_pins.query.filter_by(user_id=obj_users[0].id).all()
 
-        for each in obj_saved_pins:
-            img_id=each.id
-            rec=images.query.filter_by(id=img_id).all()[0]
-            if rec not in img_obj:
+# Action 0 means plain login prompt, 1 means "log in to view this profile"
+@app.route('/profile', defaults={'profile_email': "Default", "action": "0"})
+@app.route('/profile/<profile_email>/<action>')
+def profile_view(profile_email, action):
+    if "username" not in session:
+        if str(action) == "0":
+            return render_template("sign.html", display_nm="Author")
+        return render_template("sign.html", display_nm="Author",
+                               error="You need to log in to view profile of users.")
+    if session["username"] == "Admin":
+        return redirect(url_for('index'))
+
+    nm = session["username"]
+    email = session["email"] if profile_email == "Default" else profile_email
+
+    obj = users.query.filter_by(email=email).first_or_404()
+    slug_obj = user_slugs.query.filter_by(user_id=obj.id).first()
+    img_obj = images.query.filter_by(user_id=obj.id).all()
+    len_posts = len(img_obj)
+
+    # Show saved pins alongside their own uploads on the user's own profile
+    if email == session["email"]:
+        for each in saved_pins.query.filter_by(user_id=obj.id).all():
+            rec = db.session.get(images, each.img_id)
+            if rec is not None and rec not in img_obj:
                 img_obj.append(rec)
 
-        obj_follow=follow_user.query.filter_by(user_email=profile_email).all()
-        obj_following=follow_user.query.filter_by(follower_email=email).all()
-        
-        return render_template("profile_view.html",display_nm=nm,user_data=obj[0],slug_data=slug_obj[0],images_list=img_obj
-        ,img_count=len_posts,follow_count=len(obj_follow),following_count=len(obj_following))
+    follow_count = follow_user.query.filter_by(user_email=email).count()
+    following_count = follow_user.query.filter_by(follower_email=email).count()
+
+    return render_template("profile_view.html", display_nm=nm, user_data=obj,
+                           slug_data=slug_obj, images_list=img_obj,
+                           img_count=len_posts, follow_count=follow_count,
+                           following_count=following_count)
 
 
-@app.route(r'/post',methods=["GET","POST"])
+@app.route('/post', methods=["GET", "POST"])
+@login_required
 def post():
-    if request.method=="GET":
-        nm=session["username"]
-        cat_records=pin_category.query.all()
-        return render_template("post.html",display_nm=nm,categories=cat_records)
-    elif request.method=="POST":
-        nm=session["username"]
-        title=request.form.get("iname")
-        desc=request.form.get("desc")
-        field=request.form.get("cat")
-        links=request.form.get("links")
-        img=request.files["img"]
+    nm = session["username"]
+    cat_records = pin_category.query.all()
 
-        if 'www.' not in links:
-            links='www.'+links 
-        if 'https' not in links or 'http' not in links:
-            links='https://'+links
+    if request.method == "GET":
+        return render_template("post.html", display_nm=nm,
+                               categories=cat_records)
 
-        #Get user-id 
-        record=users.query.filter_by(email=session["email"]).all()
-        user_id=record[0].id
+    title = request.form.get("iname")
+    desc = request.form.get("desc")
+    field = request.form.get("cat")
+    links = normalize_url(request.form.get("links"))
 
-        #Save in Database
-        image_obj = images(title=title, description=desc, fields=field, links=links, user_id=user_id)
-        db.session.add(image_obj)
-        db.session.commit()
+    # Validate the upload before creating the database record
+    image = open_image_upload(request.files.get("img"))
+    if image is None:
+        return render_template("post.html", display_nm=nm,
+                               error="Please choose a valid image file.",
+                               categories=cat_records)
 
-        #Fetch image-id 
-        record=images.query.filter_by(title=title, description=desc, fields=field, links=links, user_id=user_id).all()
-        image_id=record[0].id
-        image=Image.open(img)
-        image.save("static/portal_images/"+str(image_id)+".jpg")
+    user_obj = current_user()
+    if user_obj is None:
+        return redirect(url_for('logout'))
 
-        #Updated ratings crosstab matrix
-        compute_user_similarity()
+    image_obj = images(title=title, description=desc, fields=field,
+                       links=links, user_id=user_obj.id)
+    db.session.add(image_obj)
+    db.session.commit()
 
-        cat_records=pin_category.query.all()
-        return render_template("post.html",display_nm=nm, success="Image Saved",categories=cat_records)
+    image.save(os.path.join(PORTAL_IMAGE_DIR, f"{image_obj.id}.jpg"))
+
+    refresh_similarity()
+    return render_template("post.html", display_nm=nm, success="Image Saved",
+                           categories=cat_records)
+
 
 @app.route('/logout')
 def logout():
-    session.pop("username")
-    session.pop("email")
+    session.pop("username", None)
+    session.pop("email", None)
     return redirect(url_for("index"))
 
-@app.route('/register', methods=["GET","POST"])
+
+@app.route('/register', methods=["GET", "POST"])
 def register():
-    if "username" in session:
-        nm=session["username"]
-    else:
-        nm="Author"
+    nm = display_name()
+    cat_records = pin_category.query.all()
 
     if request.method == "GET":
-        cat_records=pin_category.query.all()
-        return render_template("signup.html",display_nm=nm,categories=cat_records)
-    elif request.method == "POST":
-        fname=request.form.get("fname")
-        lname=request.form.get("lname")
-        full_name=fname+" "+lname
-        email=request.form.get("email")
-        pwd=request.form.get("pwd")
-        interest_list=request.form.getlist("int")
+        return render_template("signup.html", display_nm=nm,
+                               categories=cat_records)
 
-        new_string=""
-        for ls in interest_list:
-            new_string=new_string+ls+","
-        
-        user_obj = users(name=full_name, email=email, password=pwd, interests=new_string[:-1])
-        db.session.add(user_obj)
-        db.session.commit()
-            
-        #Set session object 
-        session["username"]=full_name
-        session["email"]=email
-        return redirect(url_for("profile"))
-    else:
-        return "404, Access not Allowed!"
+    fname = (request.form.get("fname") or "").strip()
+    lname = (request.form.get("lname") or "").strip()
+    email = (request.form.get("email") or "").strip().lower()
+    pwd = request.form.get("pwd") or ""
+    interest_list = request.form.getlist("int")
 
-@app.route('/login', methods=["GET","POST"])
+    if not (fname and email and pwd):
+        return render_template("signup.html", display_nm=nm,
+                               error="Name, email and password are required.",
+                               categories=cat_records)
+
+    if users.query.filter(db.func.lower(users.email) == email).first() is not None:
+        return render_template("signup.html", display_nm=nm,
+                               error="An account with that email already exists.",
+                               categories=cat_records)
+
+    full_name = f"{fname} {lname}".strip()
+    user_obj = users(name=full_name, email=email,
+                     password=generate_password_hash(pwd),
+                     interests=",".join(interest_list))
+    db.session.add(user_obj)
+    db.session.commit()
+
+    session["username"] = full_name
+    session["email"] = email
+    return redirect(url_for("profile"))
+
+
+@app.route('/login', methods=["GET", "POST"])
 def login():
-    if "username" in session:
-        nm=session["username"]
-    else:
-        nm="Author"
+    nm = display_name()
 
     if request.method == "GET":
-        return render_template("signin.html",display_nm=nm)
-    elif request.method == "POST":
-        email=request.form.get("email")
-        pwd=request.form.get("pwd")
+        return render_template("signin.html", display_nm=nm)
+
+    email = (request.form.get("email") or "").strip().lower()
+    pwd = request.form.get("pwd") or ""
+
+    # Dedicated admin login (credentials configurable via environment)
+    if email == ADMIN_EMAIL and pwd == ADMIN_PASSWORD:
+        session["email"] = ADMIN_EMAIL
+        session["username"] = "Admin"
+        return redirect(url_for("index"))
+
+    # Case-insensitive lookup so accounts registered before emails were
+    # normalised to lowercase can still sign in
+    record = users.query.filter(db.func.lower(users.email) == email).first()
+    if record is not None and verify_password(record, pwd):
+        session["username"] = record.name
+        session["email"] = record.email  # keep the stored casing in session
+        return redirect(url_for("index"))
+
+    return render_template("signin.html", display_nm=nm,
+                           error="Wrong email or Password entered!")
 
 
-        #Login explicitly stated
-        if email=="administrator@pinterest.com" and pwd=="admin":
-            session["email"]="administrator@pinterest.com"
-            session["username"]="Admin"
-            return redirect(url_for("index"))
-
-        record=users.query.filter_by(email=email, password=pwd).all()
-
-        if len(record)>0:
-            full_name=record[0].name
-            session["username"] = full_name
-            session["email"] = email
-            return redirect(url_for("index"))
-            
-        else:
-            return render_template("signin.html",display_nm=nm, error="Wrong email or Password entered!")
-    else:
-        return "404, Access not Allowed!"
-
-
-if __name__=="__main__":
-    app.run(debug=True, port=8000)
+if __name__ == "__main__":
+    app.run(debug=os.environ.get("FLASK_DEBUG", "1") == "1", port=8000)

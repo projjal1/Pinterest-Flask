@@ -9,16 +9,39 @@ Since Pinterest is all about organizing and rendering images this was a must-try
 ### Code Dependancies
 The code dependancies for the project are : 
 <ul>
-<li>Python 3.5+
-<li>Flask 
-<li>sklearn
+<li>Python 3.10+
+<li>Flask 3
+<li>Flask-SQLAlchemy 3 for the SQLite database management
 <li>scikit-learn
 <li>Pillow
 <li>gunicorn
-<li>Flask-SQLAlchemy for the SQlite database management
 <li>pandas 
 <li>numpy
 </ul>
+
+## Getting Started
+
+```bash
+python -m venv .venv
+.venv/Scripts/activate      # Windows (use `source .venv/bin/activate` on Linux/Mac)
+pip install -r requirements.txt
+python app.py
+```
+
+The app runs at http://localhost:8000. The bundled `user-data.sqlite3` ships with seed
+categories and images; tables are created automatically on first run if missing.
+
+### Configuration (environment variables)
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `SECRET_KEY` | Flask session signing key | dev-only value — set in production |
+| `DATABASE_URL` | SQLAlchemy database URI | bundled SQLite file |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin login | `administrator@pinterest.com` / `admin` |
+| `FLASK_DEBUG` | Set to `0` to disable debug mode | `1` |
+
+Passwords are stored as salted hashes (Werkzeug). Accounts created by older versions
+of the app are upgraded to hashed passwords automatically on their next login.
 
 ## AI feature
 I have used Collaborative filtering for generating recommended images in the home screen for logged-in users.

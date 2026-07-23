@@ -13,6 +13,7 @@ collaborative-filtering recommendation engine at its core.
   `loading="lazy"` images throughout
 - **Full-text search** across pin titles, categories and descriptions
 - **Pins** — upload, categorise, save, download and share images
+- **Comments** — Disqus-powered comment threads on every pin
 - **Profiles & follows** — bios, websites, profile pictures, follower counts
 - **Admin portal** — daily advertisement and thought-of-the-day posts
 - **Security** — hashed passwords (Werkzeug/scrypt), CSRF-protected forms,

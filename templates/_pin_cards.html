@@ -14,7 +14,9 @@
     </div>
     {% if image.links %}
     <div class="overlay3">
-      <a class="image-link" href="{{ image.links }}" target="_blank" rel="noopener">Link</a>
+      <form method="GET" action="{{ image.links }}">
+        <button class="image-link">Link</button>
+      </form>
     </div>
     {% endif %}
     {% endif %}
